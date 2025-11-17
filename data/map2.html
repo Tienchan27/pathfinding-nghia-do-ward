@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tìm đường ngắn nhất</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>" type="image/svg+xml">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <style>
+        #map{
+            height: 99vh;
+        }
+        
+        .map-heading {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 10px;
+            z-index: 1000;
+            padding: 8px 16px;
+            background-color: rgba(47, 33, 243, 0.9);
+            color: white;
+            border-radius: 4px;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .reset-button {
+            position: absolute;
+            top: 90px;
+            left: 10px;
+            z-index: 1000;
+            padding: 8px 16px;
+            background-color: #fff;
+            border: 2px solid rgba(0,0,0,0.2);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .reset-button:hover {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+    <div class="map-heading">Tìm đường ngắn nhất</div>
+    <button id="resetButton" class="reset-button">Reset Map</button>
+    <div id="map"></div>
+    <script>
+        const server = "http://localhost:5000";
+        const api = "/calculate?pntdata=";
+        const map = L.map("map").setView([21.0110941, 105.8261016], 16)
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+        let count = 0;
+        let firstPoint = {};
+        let secondPoint = {};
+        let polyline;
+        let marker1;
+        let marker2;
+        listOfBorders = [
+        [[21.0151829, 105.8229137], [21.0140730, 105.8239636]],
+        [[21.0140730, 105.8239636], [21.0140823, 105.8245940]],
+        [[21.0140823, 105.8245940], [21.0152054, 105.8252196]],
+        [[21.0152054, 105.8252196], [21.0152054, 105.8252196]],
+        [[21.0152054, 105.8252196], [21.0149504, 105.8257661]],
+        [[21.0149504, 105.8257661], [21.0170330, 105.8270682]],
+        [[21.0170330, 105.8270682], [21.0166617, 105.8280002]],
+        [[21.0134238, 105.8291988], [21.0140362, 105.8295727]],
+        [[21.0140362, 105.8295727], [21.0141994, 105.8293945]],
+        [[21.0141994, 105.8293945], [21.0143439, 105.8292365]],
+        [[21.0143439, 105.8292365], [21.0147025, 105.8286355]],
+        [[21.0147025, 105.8286355], [21.0151291, 105.8286323]],
+        [[21.0151291, 105.8286323], [21.0152824, 105.8285136]],
+        [[21.0152824, 105.8285136], [21.0156725, 105.8279070]],
+        [[21.0156725, 105.8279070], [21.0164938, 105.8284111]],
+        [[21.0164938, 105.8284111], [21.0166617, 105.8280002]],
+        [[21.0097735, 105.8302848], [21.0101816, 105.8294908]],
+        [[21.0101816, 105.8294908], [21.0106082, 105.8286159]],
+        [[21.0106082, 105.8286159], [21.0096701, 105.8281460]],
+        [[21.0096701, 105.8281460], [21.0099947, 105.8274395]],
+        [[21.0099947, 105.8274395], [21.0106330, 105.8277976]],
+        [[21.0106330, 105.8277976], [21.0113520, 105.8264007]],
+        [[21.0113520, 105.8264007], [21.0117573, 105.8265372]],
+        [[21.0117573, 105.8265372], [21.0125460, 105.8270174]],
+        [[21.0125460, 105.8270174], [21.0123060, 105.8275454]],
+        [[21.0123060, 105.8275454], [21.0128532, 105.8278961]],
+        [[21.0128532, 105.8278961], [21.0129120, 105.8280042]],
+        [[21.0129120, 105.8280042], [21.0133883, 105.8282977]],
+        [[21.0133883, 105.8282977], [21.0133232, 105.8284146]],
+        [[21.0133232, 105.8284146], [21.0134501, 105.8285087]],
+        [[21.0134501, 105.8285087], [21.0135169, 105.8283965]],
+        [[21.0135169, 105.8283965], [21.0137507, 105.8285477]],
+        [[21.0137507, 105.8285477], [21.0134238, 105.8291988]],
+        [[21.0072623, 105.8320390], [21.0074834, 105.8319219]],
+        [[21.0074834, 105.8319219], [21.0076274, 105.8318407]],
+        [[21.0076274, 105.8318407], [21.0078351, 105.8317223]],
+        [[21.0078351, 105.8317223], [21.0079983, 105.8315714]],
+        [[21.0079983, 105.8315714], [21.0081590, 105.8312782]],
+        [[21.0081590, 105.8312782], [21.0082266, 105.8310877]],
+        [[21.0082266, 105.8310877], [21.0084841, 105.8304444]],
+        [[21.0084841, 105.8304444], [21.0086121, 105.8301719]],
+        [[21.0086121, 105.8301719], [21.0087396, 105.8300353]],
+        [[21.0087396, 105.8300353], [21.0088804, 105.8299648]],
+        [[21.0088804, 105.8299648], [21.0090919, 105.8299347]],
+        [[21.0090919, 105.8299347], [21.0093317, 105.8300352]],
+        [[21.0093317, 105.8300352], [21.0097735, 105.8302848]],
+        [[21.0068692, 105.8297526], [21.0064936, 105.8306310]],
+        [[21.0064936, 105.8306310], [21.0069844, 105.8309039]],
+        [[21.0069844, 105.8309039], [21.0067272, 105.8315187]],
+        [[21.0067272, 105.8315187], [21.0071675, 105.8317632]],
+        [[21.0071675, 105.8317632], [21.0071012, 105.8318491]],
+        [[21.0071012, 105.8318491], [21.0072623, 105.8320390]],
+        [[21.0151829, 105.8229137], [21.0148074, 105.8224072]],
+        [[21.0148074, 105.8224072], [21.0140479, 105.8231371]],
+        [[21.0140479, 105.8231371], [21.0141169, 105.8232240]],
+        [[21.0141169, 105.8232240], [21.0136570, 105.8236037]],
+        [[21.0136570, 105.8236037], [21.0130217, 105.8229795]],
+        [[21.0130217, 105.8229795], [21.0106945, 105.8251586]],
+        [[21.0106945, 105.8251586], [21.0092307, 105.8244145]],
+        [[21.0092307, 105.8244145], [21.0091021, 105.8246676]],
+        [[21.0091021, 105.8246676], [21.0089613, 105.8251753]],
+        [[21.0089613, 105.8251753], [21.0087587, 105.8256448]],
+        [[21.0087587, 105.8256448], [21.0068692, 105.8297526]],
+        
+        ]
+        for (let i = 0; i < listOfBorders.length; i++){
+            let border = L.polyline(listOfBorders[i], {weight: 4, opacity:1, color:'red'})
+            border.addTo(map)
+        }
+        function onMapClick(e) {
+            if (count == 0){
+                firstPoint.lat = e.latlng.lat
+                firstPoint.lng = e.latlng.lng
+                count += 1;
+                marker1 = L.marker([firstPoint.lat, firstPoint.lng])
+                marker1.addTo(map);
+            }
+            else if (count == 1){
+                secondPoint.lat = e.latlng.lat
+                secondPoint.lng = e.latlng.lng
+                marker2 = L.marker([secondPoint.lat, secondPoint.lng])
+                marker2.addTo(map);
+                count += 1;
+                fetch(server + api + firstPoint.lat + ',' + firstPoint.lng + ',' + secondPoint.lat + ',' + secondPoint.lng, {
+                    "mode": "cors"
+                })
+                .then((res) => {
+                    console.log("Response status:", res.status);
+                    if (res.status == 200){
+                        return(res.json())
+                    }
+                    else{
+                        console.log("Failed response:", res);
+                        alert("Fail to find the shortest path")
+                    }
+                })
+                .then((array) => {
+                    console.log("Received path data:", array);
+                    polyline = L.polyline(array)
+                    polyline.addTo(map);
+                    dashPolyline = L.polyline([array[0], [secondPoint.lat, secondPoint.lng]], {"dashArray": "10", "dashOffset": 3, "color": "gray"}).addTo(map)
+                    dashPolyline2 = L.polyline([array[array.length - 1], [firstPoint.lat, firstPoint.lng]], {"dashArray": "4", "dashOffset": 3, "color": "gray"}).addTo(map)
+                })
+                .catch((e) => {
+                    console.error("Error:", e);
+                    alert("Can't Find A Path")
+                })
+            }
+            else if (count == 2){
+                count = 0;
+                map.removeLayer(marker1)
+                map.removeLayer(marker2)
+                map.removeLayer(polyline)
+                map.removeLayer(dashPolyline)
+                map.removeLayer(dashPolyline2)
+            }
+        }
+
+        map.on('click', onMapClick);
+
+        L.Control.geocoder({
+            defaultMarkGeocode: false,
+            geocoder: L.Control.Geocoder.nominatim({
+                geocodingQueryParams: {
+                    viewbox: '105.73,20.96,105.96,21.09', 
+                    bounded: 1,
+                    countrycodes: 'vn',
+                    addressdetails: 1, 
+                    limit: 10, 
+                    'accept-language': 'vi'
+                }
+            }),
+            placeholder: 'Nhập địa chỉ cần tìm...',
+            suggestMinLength: 3, 
+            position: 'topright',
+            showResultIcons: true
+        })
+        .on('markgeocode', function(e) {
+            const lat = e.geocode.center.lat;
+            const lng = e.geocode.center.lng;
+
+            if (count == 0) {
+                firstPoint.lat = lat;
+                firstPoint.lng = lng;
+                count += 1;
+                marker1 = L.marker([lat, lng]).addTo(map)
+                    .bindPopup(e.geocode.name)
+                    .openPopup();
+            } else if (count == 1) {
+                secondPoint.lat = lat;
+                secondPoint.lng = lng;
+                count += 1;
+                marker2 = L.marker([lat, lng]).addTo(map)
+                    .bindPopup(e.geocode.name)
+                    .openPopup();
+
+                fetch(server + api + firstPoint.lat + ',' + firstPoint.lng + ',' + secondPoint.lat + ',' + secondPoint.lng, {
+                    "mode": "cors"
+                })
+                .then((res) => {
+                    if (res.status == 200) {
+                        return res.json();
+                    } else {
+                        alert("Fail to find the shortest path");
+                    }
+                })
+                .then((array) => {
+                    polyline = L.polyline(array).addTo(map);
+                    dashPolyline = L.polyline([array[0], [secondPoint.lat, secondPoint.lng]], {"dashArray": "10", "dashOffset": 3, "color": "gray"}).addTo(map);
+                    dashPolyline2 = L.polyline([array[array.length - 1], [firstPoint.lat, firstPoint.lng]], {"dashArray": "4", "dashOffset": 3, "color": "gray"}).addTo(map);
+                })
+                .catch((e) => {
+                    alert("Can't Find A Path");
+                });
+            }
+        })
+        .addTo(map);
+
+        function update() {
+            var new_data = "".concat(destination.lat, " ", destination.lng);
+            $.ajax({
+                url: "/update",
+                type: "POST",
+                data: { data: new_data },
+                success: function () {
+                    console.log("success");
+                }
+            });
+        }
+
+        function resetMap() {
+            // Clear existing markers and paths
+            if (marker1) {
+                map.removeLayer(marker1);
+                marker1 = null;
+            }
+            if (marker2) {
+                map.removeLayer(marker2);
+                marker2 = null;
+            }
+            if (polyline) {
+                map.removeLayer(polyline);
+                polyline = null;
+            }
+            
+            // Clear blocked edges file
+            fetch('/clear_blocked_edges', {
+                method: 'POST',
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Blocked edges cleared');
+            })
+            .catch(error => {
+                console.error('Error clearing blocked edges:', error);
+            });
+        }
+        
+        // Add click event listener to reset button
+        document.getElementById('resetButton').addEventListener('click', resetMap);
+    </script>
+</body>
+</html>
