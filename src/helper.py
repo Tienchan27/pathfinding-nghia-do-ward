@@ -60,10 +60,10 @@ def getAdjacentNodes(OSMId):
     for edge in edges:
         if (edge["@source"] == OSMId):
             for datum in edge["data"]:
-                if (datum["@key"] == "d11"):
+                if (datum["@key"] == "d13"):
                     length = float(datum["#text"]) #string
                     break
-                elif (datum["@key"] == "d9"):
+                elif (datum["@key"] == "d14"):
                     if (datum["#text"] in road):
                         isRoad = 1
             if (isRoad):
@@ -87,7 +87,7 @@ def getLineString(start, end):
     for edge in xmldoc["graphml"]["graph"]["edge"]:
         if (edge["@source"] == start and edge["@target"] == end):
             for datum in edge["data"]:
-                if datum["@key"] == "d13":
+                if datum["@key"] == "d15":
                     ans = extract.extractLineString(datum["#text"])
                     return ans
     return ans
