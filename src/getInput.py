@@ -7,6 +7,7 @@ count = 0
 for x in dataset:
     [lat, lon] = x.split()
     nodes.append((float(lat), float(lon)))
+    
 def getNearestPoint(lat, lon):
     # lat: a float number representing the latitude which was chosen by the user
     # lon: a float number representing the longitude which was chosen by the user
@@ -22,6 +23,7 @@ def getNearestPoint(lat, lon):
             location = node
             curr = distance
     return (location[0],location[1])
+
 def getAllPoints():
     ans = []
     for x in nodes:

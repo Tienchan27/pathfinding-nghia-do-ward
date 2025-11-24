@@ -3,11 +3,11 @@ import helper as help
 import sys
 
 # generate all coordinates on the road
-graphml = open("./data/map3.graphml", "+br")
+graphml = open("../data/map3.graphml", "+br")
 
 xmldoc = xmltodict.parse(graphml, xml_attribs = True)
 orig_stdout = sys.stdout
-f = open("./data/out4.txt", "w")
+f = open("../data/out4.txt", "w")
 sys.stdout = f
 
 road = {

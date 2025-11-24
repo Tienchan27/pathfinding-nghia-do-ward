@@ -13,73 +13,9 @@
      crossorigin=""></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-    <style>
-        #map{
-            height: 99vh;
-        }
-        
-        .map-heading {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            top: 10px;
-            z-index: 1000;
-            padding: 8px 16px;
-            background-color: rgba(33, 150, 243, 0.9);
-            color: white;
-            border-radius: 4px;
-            font-family: Arial, sans-serif;
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        
-        .map-button {
-            position: absolute;
-            left: 10px;
-            z-index: 1000;
-            padding: 8px 16px;
-            background-color: #fff;
-            border: 2px solid rgba(0,0,0,0.2);
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        
-        .reset-map-button {
-            top: 90px;
-        }
-        
-        .reset-edges-button {
-            top: 128px;
-            background-color: #ffebee;
-            border-color: #ef5350;
-            color: #d32f2f;
-        }
-        
-        .reset-edges-button:hover {
-            background-color: #ffcdd2;
-        }
-        
-        .map-button:hover {
-            background-color: #f4f4f4;
-        }
-
-        /* CSS cho tiêu đề */
-        .map-title {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
-            background-color: rgba(255, 255, 255, 0.8);
-            padding: 10px 20px;
-            border-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-    </style>
+    <link rel="stylesheet" href="/css/style_scenarios.css">
 </head>
+
 <body>
     <div class="map-heading">Tìm đường tránh tắc nghẽn</div>
     <button id="resetMapButton" class="map-button reset-map-button">Reset Map</button>

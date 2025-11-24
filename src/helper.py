@@ -1,6 +1,6 @@
 import xmltodict
 import haversine
-import extract
+import handle_map.extract as extract
 import os
 graphml_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/map3.graphml"))
 graphml = open(graphml_path, "+br")

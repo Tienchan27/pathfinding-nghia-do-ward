@@ -1,12 +1,12 @@
 import xmltodict
-import extract
+import handle_map.extract as extract
 import sys
 import helper
 
 # get the border coordinates of the area
 orig_stdout = sys.stdout
 f = open("./data/border.txt", "w")
-graphml = open("./data/map3.graphml", "+br")
+graphml = open("../data/map3.graphml", "+br")
 xmldoc = xmltodict.parse(graphml, xml_attribs=True)
 sys.stdout = f
 ways = ["1418571379","1420672675","1418571380","1413067863","1413067864",
