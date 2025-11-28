@@ -3,7 +3,119 @@ import heapq as hq
 import time
 import numpy as np
 
+# --- Load blocked edges & penalty một lần ở mức module ---
 
+blocked_edges = set()
+edge_penalty = {}
+
+with open('data/blocked_edges.txt', 'r') as f:
+    for line in f:
+        u, v, reason = line.strip().split()
+        blocked_edges.add((u, v))
+        blocked_edges.add((v, u))  # vì đồ thị có thể vô hướng
+
+        if reason == "traffic":
+            edge_penalty[(u, v)] = 5
+            edge_penalty[(v, u)] = 5
+        elif reason == "flood":
+            edge_penalty[(u, v)] = float('inf')
+            edge_penalty[(v, u)] = float('inf')
+
+# --- Cache LatLon để tránh gọi helper nhiều lần ---
+
+latlon_cache = {}
+
+def get_latlon_cached(node):
+    if node not in latlon_cache:
+        latlon_cache[node] = help.getLatLon(node)
+    return latlon_cache[node]
+
+# --- Improved A* ---
+
+def astar(start, end):
+    """
+    A* chuẩn: có g_score, f_score, cho phép relax lại node nếu tìm được đường tốt hơn.
+    Trả về:
+        - previous: dict để reconstruct đường đi
+        - final_distance: tổng độ dài đường (đã nhân penalty)
+    """
+
+    start_location = get_latlon_cached(start)
+    end_location = get_latlon_cached(end)
+
+    open_heap = []                     # (f, node)
+    g_score = {start: 0.0}             # chi phí từ start đến node
+    f_start = help.getHeuristic(start_location, end_location)
+    f_score = {start: f_start}
+    previous = {start: None}
+
+    hq.heappush(open_heap, (f_start, start))
+
+    closed = set()
+    t0 = time.time()
+
+    while open_heap:
+        curr_f, curr_node = hq.heappop(open_heap)
+
+        # Nếu node này đã xử lý với f tốt hơn rồi thì bỏ qua (entry cũ trong heap)
+        if curr_node in closed:
+            continue
+
+        if curr_node == end:
+            final_distance = g_score[curr_node]
+            path = reconstruct_path(previous, start, end)
+            t1 = time.time()
+            print("A* time:", t1 - t0, "seconds")
+            print("A* distance:", final_distance)
+            print(path)
+            return previous, final_distance
+
+        closed.add(curr_node)
+
+        for neighbor_id, edge_length in help.getAdjacentNodes(curr_node):
+            # Bỏ qua cạnh bị chặn do lũ
+            if (curr_node, neighbor_id) in edge_penalty and edge_penalty[(curr_node, neighbor_id)] == float('inf'):
+                continue
+
+            penalty = edge_penalty.get((curr_node, neighbor_id), 1)
+            adjusted_length = edge_length * penalty
+
+            tentative_g = g_score[curr_node] + adjusted_length
+
+            # Nếu đã có g_score tốt hơn rồi thì bỏ
+            if tentative_g >= g_score.get(neighbor_id, float('inf')):
+                continue
+
+            # Tìm được đường tốt hơn đến neighbor
+            g_score[neighbor_id] = tentative_g
+            neighbor_location = get_latlon_cached(neighbor_id)
+            f = tentative_g + help.getHeuristic(neighbor_location, end_location)
+            f_score[neighbor_id] = f
+            previous[neighbor_id] = curr_node
+
+            hq.heappush(open_heap, (f, neighbor_id))
+
+    # Không tìm được đường
+    t1 = time.time()
+    print("A* time:", t1 - t0, "seconds")
+    print("Cannot find a path", start, "to", end)
+    return previous, float('inf')
+
+def reconstruct_path(previous, start, end):
+    path = []
+    current = end
+    while current != start:
+        prev = previous.get(current)
+        if prev is None:
+            return []  # không tìm được đường
+        path.append((prev, current))
+        current = prev
+    path.reverse()
+    return path
+
+# code cũ, cái này bị lỗi ở tập closed nên chưa cho đường tối ưu (đường dài hơn Dijkstra, sai với lý thuyết)
+
+"""
 def astar(start, end):
     # start: OSMId of the first point
     # end: OSMId of the second point
@@ -94,7 +206,7 @@ def reconstruct_path(previous, start, end):
         current = prev
     path.reverse()
     return path
-
+    """
 
 
         
