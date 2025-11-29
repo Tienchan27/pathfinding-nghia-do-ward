@@ -5,7 +5,7 @@ import astar
 import astar_flood
 import astar_traffic
 import dijkstra
-import greedyBFS
+import greedy_BFS
 import helper
 import json
 import time
