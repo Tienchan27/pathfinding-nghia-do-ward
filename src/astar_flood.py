@@ -63,7 +63,7 @@ def astar_flood(start, end):
             t1 = time.time()
             print("A* flood (improved) time:", t1 - t0, "seconds")
             print("A* flood (improved) distance:", final_distance)
-            mark_flood_on_path(path)
+            # mark_flood_on_path(path)  # Removed: chỉ lưu khi user click button
             # print("A* flood path:", path)
             return previous, final_distance
 
@@ -90,7 +90,7 @@ def astar_flood(start, end):
     t1 = time.time()
     print("A* flood (improved) time:", t1 - t0, "seconds")
     print("Không tìm được đường (A* flood) từ", start, "tới", end)
-    mark_flood_on_path(path)
+    # mark_flood_on_path(path)  # Removed: chỉ lưu khi user click button
     return previous, float('inf')
 
 def reconstruct_path(previous, start, end):

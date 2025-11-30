@@ -91,18 +91,20 @@ def greedy_best_first(start, end):
             hq.heappush(opened, (h_neighbor, neighborNodeOSMId))
 
     time_taken = time.time() - s
-    print("Greedy Best-First Search time (seconds):", time_taken)
-    print("Số node đã duyệt (GBFS):", len(visited))
 
     if end not in dist:
         finalDistance = float('inf')
         path = []
-        print("GBFS: không tìm được đường đi từ", start, "đến", end)
+        print(f"Greedy BFS time (seconds): {time_taken:.6f}")
+        print(f"Greedy BFS: Không tìm thấy đường từ {start} đến {end}")
+        print(f"Greedy BFS nodes visited: {len(visited)}")
     else:
         finalDistance = dist[end]
         path = reconstruct_path(previous, start, end)
-        print("GBFS shortest path (theo distance thực mà nó đi được):", path)
-        print("GBFS path length:", finalDistance)
+        print(f"Greedy BFS time (seconds): {time_taken:.6f}")
+        print(f"Greedy BFS distance: {finalDistance:.6f}")
+        print(f"Greedy BFS path: {path}")
+        print(f"Greedy BFS nodes visited: {len(visited)}")
 
     return previous, finalDistance
 

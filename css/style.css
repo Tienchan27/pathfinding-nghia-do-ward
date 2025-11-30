@@ -19,7 +19,7 @@
 
 .reset-button {
     position: absolute;
-    top: 90px;
+    top: 130px;
     left: 10px;
     z-index: 1000;
     padding: 8px 16px;
@@ -31,4 +31,18 @@
 
 .reset-button:hover {
     background-color: #f4f4f4;
+}
+
+.algorithm-selector {
+    position: absolute;
+    top: 90px;
+    left: 10px;
+    z-index: 1000;
+    padding: 8px 12px;
+    background-color: #fff;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-radius: 4px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    cursor: pointer;
 }

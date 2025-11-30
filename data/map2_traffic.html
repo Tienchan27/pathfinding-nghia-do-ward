@@ -13,14 +13,18 @@
      crossorigin=""></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-    <link rel="stylesheet" href="/css/style_scenarios.css">
+    <link rel="stylesheet" href="../css/style_scenarios.css">
 </head>
 
 <body>
     <div class="map-heading">Tìm đường tránh tắc nghẽn</div>
+
     <button id="resetMapButton" class="map-button reset-map-button">Reset Map</button>
     <button id="resetEdgesButton" class="map-button reset-edges-button">Reset Blocked Edges</button>
+    <button id="saveEdgesButton" class="map-button save-edges-button" disabled>Save Traffic Route</button>
+
     <div id="map"></div>
+    
     <script>
         const server = "http://localhost:5000";
         const api = "/calculate_traffic?pntdata=";
@@ -37,6 +41,8 @@
         let marker2;
         let dashPolyline;
         let dashPolyline2;
+        let pendingEdges = [];
+        const saveEdgesButton = document.getElementById('saveEdgesButton');
         listOfBorders = [
         [[21.052119, 105.8044655], [21.0519123, 105.8019208], [21.0518971, 105.8007069], [21.0518683, 105.7948851], 
         [21.0518770, 105.7929903], [21.0519239, 105.7899180], [21.0529624, 105.789934], [21.0543078, 105.789894], 
@@ -95,10 +101,27 @@
                     }
                     return response.json();
                 })
-                .then(array => {
+                .then(result => {
+                    if (!result) {
+                        alert("Không nhận được phản hồi từ server");
+                        pendingEdges = [];
+                        if (saveEdgesButton) saveEdgesButton.disabled = true;
+                        return;
+                    }
+                    
+                    if (result.error) {
+                        alert(result.error);
+                        pendingEdges = [];
+                        if (saveEdgesButton) saveEdgesButton.disabled = true;
+                        return;
+                    }
+                    
+                    const array = result.coordinates || result;
                     if (!array || array.length === 0) {
                         console.log("No path found");
                         alert("Không tìm thấy đường đi phù hợp");
+                        pendingEdges = [];
+                        if (saveEdgesButton) saveEdgesButton.disabled = true;
                         return;
                     }
 
@@ -121,6 +144,11 @@
                     }
                     dashPolyline2 = L.polyline([array[array.length - 1], [firstPoint.lat, firstPoint.lng]], 
                         {"dashArray": "4", "dashOffset": 3, "color": "gray"}).addTo(map);
+                    
+                    pendingEdges = Array.isArray(result.edges) ? result.edges : [];
+                    if (saveEdgesButton) {
+                        saveEdgesButton.disabled = pendingEdges.length === 0;
+                    }
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -156,7 +184,44 @@
             polyline = null;
             dashPolyline = null;
             dashPolyline2 = null;
+            pendingEdges = [];
+            if (saveEdgesButton) saveEdgesButton.disabled = true;
             count = 0;
+        }
+        
+        function saveCurrentRoute() {
+            if (!pendingEdges.length) {
+                alert('Không có tuyến đường nào để lưu');
+                return;
+            }
+            if (!saveEdgesButton) return;
+            saveEdgesButton.disabled = true;
+            fetch(server + '/block_edges', {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    edges: pendingEdges,
+                    reason: 'traffic'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Đã lưu tuyến đường tránh tắc nghẽn');
+                    pendingEdges = [];
+                } else {
+                    alert('Không thể lưu tuyến đường: ' + (data.message || 'Unknown error'));
+                    saveEdgesButton.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi lưu tuyến đường');
+                saveEdgesButton.disabled = false;
+            });
         }
 
         function resetBlockedEdges() {
@@ -187,6 +252,9 @@
         // Add click event listeners to buttons
         document.getElementById('resetMapButton').addEventListener('click', resetMap);
         document.getElementById('resetEdgesButton').addEventListener('click', resetBlockedEdges);
+        if (saveEdgesButton) {
+            saveEdgesButton.addEventListener('click', saveCurrentRoute);
+        }
 
         L.Control.geocoder({
             defaultMarkGeocode: false,
@@ -242,7 +310,16 @@
                     }
                     return res.json();
                 })
-                .then((array) => {
+                .then((result) => {
+                    if (!result) {
+                        throw new Error("Không nhận được phản hồi từ server");
+                    }
+                    
+                    if (result.error) {
+                        throw new Error(result.error);
+                    }
+                    
+                    const array = result.coordinates || result;
                     if (!array || array.length === 0) {
                         throw new Error("Không tìm được đường đi");
                     }
@@ -263,6 +340,11 @@
                         [array[array.length - 1], [firstPoint.lat, firstPoint.lng]], 
                         {"dashArray": "4", "dashOffset": "3", "color": "gray"}
                     ).addTo(map);
+                    
+                    pendingEdges = Array.isArray(result.edges) ? result.edges : [];
+                    if (saveEdgesButton) {
+                        saveEdgesButton.disabled = pendingEdges.length === 0;
+                    }
                     
                     // Fit bounds to show the entire route
                     map.fitBounds(polyline.getBounds(), {padding: [50, 50]});

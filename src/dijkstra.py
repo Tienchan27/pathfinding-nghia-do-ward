@@ -81,17 +81,21 @@ def dijkstra(start, end):
                 max_time = t1 - s1
 
     time_taken = time.time() - s
-    print("Time taken to find path (in second): " + str(time_taken))
+    nodes_visited = len([k for k in dist.keys() if dist[k] != float('inf')])
 
     # Nếu không có đường tới end
     finalDistance = dist.get(end, float('inf'))
     if finalDistance == float('inf'):
-        print("No path found.")
+        print(f"Dijkstra time (seconds): {time_taken:.6f}")
+        print(f"Dijkstra: Không tìm thấy đường từ {start} đến {end}")
+        print(f"Dijkstra nodes visited: {nodes_visited}")
         path = []
     else:
         path = reconstruct_path(previous, start, end)
-        print(path)
-        print("Dijsktra length: ", finalDistance)
+        print(f"Dijkstra time (seconds): {time_taken:.6f}")
+        print(f"Dijkstra distance: {finalDistance:.6f}")
+        print(f"Dijkstra path: {path}")
+        print(f"Dijkstra nodes visited: {nodes_visited}")
 
     return previous, finalDistance
 

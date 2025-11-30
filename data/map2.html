@@ -10,15 +10,26 @@
     crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-     crossorigin=""></script>
+     crossorigin="">
+    </script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-    <link rel="stylesheet" href="/css/style.css">
-
+    <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
     <div class="map-heading">Tìm đường ngắn nhất</div>
+
+    <select id="algorithmSelector" class="algorithm-selector">
+        <option value="astar">A* Search</option>
+        <option value="dijkstra">Dijkstra</option>
+        <option value="greedy_bfs">Greedy Best-First Search</option>
+        <option value="bfs">Breadth-First Search</option>
+        <option value="dfs">Depth-First Search</option>
+        <option value="ids">Iterative Deepening Search</option>
+    </select>
+
     <button id="resetButton" class="reset-button">Reset Map</button>
+
     <div id="map"></div>
     <script>
         const server = "http://localhost:5000";
@@ -34,6 +45,9 @@
         let polyline;
         let marker1;
         let marker2;
+        let dashPolyline;
+        let dashPolyline2;
+        const algorithmSelector = document.getElementById('algorithmSelector');
         listOfBorders = [
         [[21.052119, 105.8044655], [21.0519123, 105.8019208], [21.0518971, 105.8007069], [21.0518683, 105.7948851], 
         [21.0518770, 105.7929903], [21.0519239, 105.7899180], [21.0529624, 105.789934], [21.0543078, 105.789894], 
@@ -63,52 +77,90 @@
             let border = L.polyline(listOfBorders[i], {weight: 4, opacity:1, color:'red'})
             border.addTo(map)
         }
+        function clearExistingRoute() {
+            if (polyline) {
+                map.removeLayer(polyline);
+                polyline = null;
+            }
+            if (dashPolyline) {
+                map.removeLayer(dashPolyline);
+                dashPolyline = null;
+            }
+            if (dashPolyline2) {
+                map.removeLayer(dashPolyline2);
+                dashPolyline2 = null;
+            }
+        }
+
+        function handleRouteResult(result) {
+            if (!result) {
+                alert("Không nhận được phản hồi từ server");
+                return;
+            }
+            
+            // Check for error message
+            if (result.error) {
+                alert(result.error);
+                return;
+            }
+            
+            if (!Array.isArray(result.coordinates) || result.coordinates.length === 0) {
+                alert("Không tìm thấy đường đi phù hợp");
+                return;
+            }
+            
+            const coordinates = result.coordinates;
+            clearExistingRoute();
+            polyline = L.polyline(coordinates).addTo(map);
+            dashPolyline = L.polyline([coordinates[0], [secondPoint.lat, secondPoint.lng]], {"dashArray": "10", "dashOffset": 3, "color": "gray"}).addTo(map);
+            dashPolyline2 = L.polyline([coordinates[coordinates.length - 1], [firstPoint.lat, firstPoint.lng]], {"dashArray": "4", "dashOffset": 3, "color": "gray"}).addTo(map);
+        }
+
         function onMapClick(e) {
             if (count == 0){
-                firstPoint.lat = e.latlng.lat
-                firstPoint.lng = e.latlng.lng
+                firstPoint.lat = e.latlng.lat;
+                firstPoint.lng = e.latlng.lng;
                 count += 1;
-                marker1 = L.marker([firstPoint.lat, firstPoint.lng])
+                marker1 = L.marker([firstPoint.lat, firstPoint.lng]);
                 marker1.addTo(map);
             }
             else if (count == 1){
-                secondPoint.lat = e.latlng.lat
-                secondPoint.lng = e.latlng.lng
-                marker2 = L.marker([secondPoint.lat, secondPoint.lng])
+                secondPoint.lat = e.latlng.lat;
+                secondPoint.lng = e.latlng.lng;
+                marker2 = L.marker([secondPoint.lat, secondPoint.lng]);
                 marker2.addTo(map);
                 count += 1;
-                fetch(server + api + firstPoint.lat + ',' + firstPoint.lng + ',' + secondPoint.lat + ',' + secondPoint.lng, {
+                
+                const algorithm = algorithmSelector ? algorithmSelector.value : 'astar';
+                const url = server + api + firstPoint.lat + ',' + firstPoint.lng + ',' + secondPoint.lat + ',' + secondPoint.lng + '&algorithm=' + algorithm;
+                
+                fetch(url, {
                     "mode": "cors"
                 })
                 .then((res) => {
                     console.log("Response status:", res.status);
                     if (res.status == 200){
-                        return(res.json())
+                        return res.json();
                     }
                     else{
                         console.log("Failed response:", res);
-                        alert("Fail to find the shortest path")
+                        alert("Fail to find the shortest path");
+                        return null;
                     }
                 })
-                .then((array) => {
-                    console.log("Received path data:", array);
-                    polyline = L.polyline(array)
-                    polyline.addTo(map);
-                    dashPolyline = L.polyline([array[0], [secondPoint.lat, secondPoint.lng]], {"dashArray": "10", "dashOffset": 3, "color": "gray"}).addTo(map)
-                    dashPolyline2 = L.polyline([array[array.length - 1], [firstPoint.lat, firstPoint.lng]], {"dashArray": "4", "dashOffset": 3, "color": "gray"}).addTo(map)
-                })
+                .then(handleRouteResult)
                 .catch((e) => {
                     console.error("Error:", e);
-                    alert("Can't Find A Path")
-                })
+                    alert("Can't Find A Path");
+                });
             }
             else if (count == 2){
                 count = 0;
-                map.removeLayer(marker1)
-                map.removeLayer(marker2)
-                map.removeLayer(polyline)
-                map.removeLayer(dashPolyline)
-                map.removeLayer(dashPolyline2)
+                if (marker1) map.removeLayer(marker1);
+                if (marker2) map.removeLayer(marker2);
+                clearExistingRoute();
+                marker1 = null;
+                marker2 = null;
             }
         }
 
@@ -150,7 +202,10 @@
                     .bindPopup(e.geocode.name)
                     .openPopup();
 
-                fetch(server + api + firstPoint.lat + ',' + firstPoint.lng + ',' + secondPoint.lat + ',' + secondPoint.lng, {
+                const algorithm = algorithmSelector ? algorithmSelector.value : 'astar';
+                const url = server + api + firstPoint.lat + ',' + firstPoint.lng + ',' + secondPoint.lat + ',' + secondPoint.lng + '&algorithm=' + algorithm;
+                
+                fetch(url, {
                     "mode": "cors"
                 })
                 .then((res) => {
@@ -158,13 +213,10 @@
                         return res.json();
                     } else {
                         alert("Fail to find the shortest path");
+                        return null;
                     }
                 })
-                .then((array) => {
-                    polyline = L.polyline(array).addTo(map);
-                    dashPolyline = L.polyline([array[0], [secondPoint.lat, secondPoint.lng]], {"dashArray": "10", "dashOffset": 3, "color": "gray"}).addTo(map);
-                    dashPolyline2 = L.polyline([array[array.length - 1], [firstPoint.lat, firstPoint.lng]], {"dashArray": "4", "dashOffset": 3, "color": "gray"}).addTo(map);
-                })
+                .then(handleRouteResult)
                 .catch((e) => {
                     alert("Can't Find A Path");
                 });
@@ -194,25 +246,11 @@
                 map.removeLayer(marker2);
                 marker2 = null;
             }
-            if (polyline) {
-                map.removeLayer(polyline);
-                polyline = null;
-            }
-            
-            // Clear blocked edges file
-            fetch('/clear_blocked_edges', {
-                method: 'POST',
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Blocked edges cleared');
-            })
-            .catch(error => {
-                console.error('Error clearing blocked edges:', error);
-            });
+            clearExistingRoute();
+            count = 0;
         }
         
-        // Add click event listener to reset button
+        // Add click event listener
         document.getElementById('resetButton').addEventListener('click', resetMap);
     </script>
 </body>

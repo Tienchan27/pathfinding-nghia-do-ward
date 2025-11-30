@@ -63,11 +63,41 @@ def getLatLon(OSMId):
     return _node_coords[OSMId]
 
 def getOSMId(lat, lon):
-
+    """
+    Tìm node_id từ tọa độ. Nếu không tìm thấy exact match,
+    tìm node gần nhất trong phạm vi tolerance nhỏ.
+    """
+    import haversine
+    
+    # Thử tìm exact match trước
     for node_id, (la, lo) in _node_coords.items():
         if la == lat and lo == lon:
             return node_id
-    return ""
+    
+    # Nếu không tìm thấy exact match, tìm node gần nhất
+    # với tolerance nhỏ (1m)
+    point = (lat, lon)
+    min_distance = float('inf')
+    best_node_id = None
+    tolerance = 0.00001  # ~1m trong haversine
+    
+    for node_id, node_coord in _node_coords.items():
+        dist = haversine.haversine(point, node_coord)
+        if dist < tolerance and dist < min_distance:
+            min_distance = dist
+            best_node_id = node_id
+    
+    if best_node_id:
+        return best_node_id
+    
+    # Fallback: trả về node gần nhất (không giới hạn tolerance)
+    for node_id, node_coord in _node_coords.items():
+        dist = haversine.haversine(point, node_coord)
+        if dist < min_distance:
+            min_distance = dist
+            best_node_id = node_id
+    
+    return best_node_id if best_node_id else ""
 
 def getAdjacentNodes(OSMId):
     return _adj.get(OSMId, [])

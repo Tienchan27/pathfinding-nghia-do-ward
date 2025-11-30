@@ -55,15 +55,20 @@ def ids(start, end, max_depth=500):
 
         if found:
             total_time = time.time() - overall_start_time
-            print(f"IDS: Tìm thấy đường với depth_limit = {depth_limit}")
-            print("IDS time (seconds):", total_time)
-            print("IDS distance:", final_distance)
+            path = reconstruct_path(previous, start, end)
+            nodes_visited = len(visited)
+            print(f"IDS time (seconds): {total_time:.6f}")
+            print(f"IDS distance: {final_distance:.6f}")
+            print(f"IDS path: {path}")
+            print(f"IDS nodes visited: {nodes_visited}")
+            print(f"IDS depth limit: {depth_limit}")
             return previous, final_distance
 
     # Nếu không tìm được trong mọi depth_limit
     total_time = time.time() - overall_start_time
-    print(f"IDS: Không tìm thấy đường từ {start} tới {end} trong max_depth = {max_depth}")
-    print("IDS time (seconds):", total_time)
+    print(f"IDS time (seconds): {total_time:.6f}")
+    print(f"IDS: Không tìm thấy đường từ {start} đến {end}")
+    print(f"IDS max depth: {max_depth}")
     return {}, float('inf')
 
 

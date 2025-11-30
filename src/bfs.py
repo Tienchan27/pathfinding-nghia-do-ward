@@ -73,16 +73,15 @@ def bfs(start, end):
                 q.append(neighbor)
 
     elapsed = time.time() - s
-    print("BFS time (seconds):", elapsed)
-    print("Số đỉnh BFS đã thăm:", len(visited))
 
     if not found:
-        print(f"BFS: Không tìm thấy đường từ {start} tới {end}")
+        print(f"BFS time (seconds): {elapsed:.6f}")
+        print(f"BFS: Không tìm thấy đường từ {start} đến {end}")
+        print(f"BFS nodes visited: {len(visited)}")
         return {}, float('inf')
 
     # Reconstruct path để tính độ dài
     path = reconstruct_path(previous, start, end)
-    print("BFS path (list of edges):", path)
 
     total_dist = 0.0
     for u, v in path:
@@ -92,7 +91,10 @@ def bfs(start, end):
                 total_dist += length
                 break
 
-    print("BFS path distance:", total_dist)
+    print(f"BFS time (seconds): {elapsed:.6f}")
+    print(f"BFS distance: {total_dist:.6f}")
+    print(f"BFS path: {path}")
+    print(f"BFS nodes visited: {len(visited)}")
     return previous, total_dist
 
 

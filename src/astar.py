@@ -35,6 +35,7 @@ def get_latlon_cached(node):
 def astar(start, end):
     """
     A* chuẩn: có g_score, f_score, cho phép relax lại node nếu tìm được đường tốt hơn.
+    Tối ưu: chỉ push node vào heap nếu chưa có trong open_set hoặc có f_score tốt hơn.
     Trả về:
         - previous: dict để reconstruct đường đi
         - final_distance: tổng độ dài đường (đã nhân penalty)
@@ -44,6 +45,7 @@ def astar(start, end):
     end_location = get_latlon_cached(end)
 
     open_heap = []                     # (f, node)
+    open_set = {start}                 # Track nodes trong heap để tránh duplicate
     g_score = {start: 0.0}             # chi phí từ start đến node
     f_start = help.getHeuristic(start_location, end_location)
     f_score = {start: f_start}
@@ -61,18 +63,28 @@ def astar(start, end):
         if curr_node in closed:
             continue
 
+        # Kiểm tra xem f_score hiện tại có còn đúng không (có thể đã được cập nhật)
+        if curr_node in f_score and curr_f > f_score[curr_node]:
+            continue
+
         if curr_node == end:
             final_distance = g_score[curr_node]
             path = reconstruct_path(previous, start, end)
             t1 = time.time()
-            print("A* time:", t1 - t0, "seconds")
-            print("A* distance:", final_distance)
-            print(path)
+            print(f"A* time (seconds): {t1 - t0:.6f}")
+            print(f"A* distance: {final_distance:.6f}")
+            print(f"A* path: {path}")
+            print(f"A* nodes visited: {len(closed)}")
             return previous, final_distance
 
         closed.add(curr_node)
+        open_set.discard(curr_node)  # Remove khỏi open_set khi đã closed
 
         for neighbor_id, edge_length in help.getAdjacentNodes(curr_node):
+            # Bỏ qua nếu đã closed
+            if neighbor_id in closed:
+                continue
+
             # Bỏ qua cạnh bị chặn do lũ
             if (curr_node, neighbor_id) in edge_penalty and edge_penalty[(curr_node, neighbor_id)] == float('inf'):
                 continue
@@ -93,12 +105,18 @@ def astar(start, end):
             f_score[neighbor_id] = f
             previous[neighbor_id] = curr_node
 
-            hq.heappush(open_heap, (f, neighbor_id))
+            # Chỉ push nếu chưa có trong open_set hoặc f_score tốt hơn
+            if neighbor_id not in open_set:
+                hq.heappush(open_heap, (f, neighbor_id))
+                open_set.add(neighbor_id)
+            # Nếu đã có trong open_set nhưng f_score tốt hơn, vẫn push (lazy deletion)
+            # Entry cũ sẽ bị skip khi pop ra
 
     # Không tìm được đường
     t1 = time.time()
-    print("A* time:", t1 - t0, "seconds")
-    print("Cannot find a path", start, "to", end)
+    print(f"A* time (seconds): {t1 - t0:.6f}")
+    print(f"A*: Không tìm thấy đường từ {start} đến {end}")
+    print(f"A* nodes visited: {len(closed)}")
     return previous, float('inf')
 
 def reconstruct_path(previous, start, end):

@@ -60,15 +60,13 @@ def dfs(start, end=None):
                 previous[neighbor] = curr
                 stack.append(neighbor)
 
-    print("DFS time (seconds):", time.time() - s)
-    print("Số đỉnh DFS đã thăm:", len(visited))
+    elapsed = time.time() - s
 
     final_distance = None
 
     # Nếu có end và tìm được đường, reconstruct + tính độ dài
     if end is not None and end in visited:
         path = reconstruct_path(previous, start, end)
-        print("DFS path from start to end:", path)
 
         # Tính tổng độ dài đường đi (dùng helper.getAdjacentNodes để lấy weight)
         total_dist = 0.0
@@ -80,9 +78,14 @@ def dfs(start, end=None):
                     total_dist += length
                     break
         final_distance = total_dist
-        print("DFS path distance:", final_distance)
+        print(f"DFS time (seconds): {elapsed:.6f}")
+        print(f"DFS distance: {final_distance:.6f}")
+        print(f"DFS path: {path}")
+        print(f"DFS nodes visited: {len(visited)}")
     else:
-        print("Không tìm được đường đi DFS từ start đến end")
+        print(f"DFS time (seconds): {elapsed:.6f}")
+        print(f"DFS: Không tìm thấy đường từ {start} đến {end}")
+        print(f"DFS nodes visited: {len(visited)}")
     
     return previous, final_distance
 
