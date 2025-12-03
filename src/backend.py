@@ -72,7 +72,7 @@ def calculate_traffic():
 def reset_blocked_edges():
     try:
         # Open file in write mode to clear it
-        with open('data/blocked_edges.txt', 'w', encoding='utf-8') as f:
+        with open('C:\\Users\\Nhi Nhi\\Documents\\Code\\intro AI\\pathfinding-nghia-do-ward\\data\\blocked_edges.txt', 'w', encoding='utf-8') as f:
             f.write('')  
         # Return success response
         return jsonify({

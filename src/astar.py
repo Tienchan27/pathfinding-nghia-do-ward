@@ -8,7 +8,7 @@ import numpy as np
 blocked_edges = set()
 edge_penalty = {}
 
-with open('data/blocked_edges.txt', 'r') as f:
+with open('C:\\Users\\Nhi Nhi\\Documents\\Code\\intro AI\\pathfinding-nghia-do-ward\\data\\blocked_edges.txt', 'r') as f:
     for line in f:
         u, v, reason = line.strip().split()
         blocked_edges.add((u, v))
