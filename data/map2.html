@@ -17,12 +17,50 @@
 
 </head>
 <body>
+    <div id="sidebar">
+        <h3>Chọn thuật toán</h3>
+        <select id="algoSelect">
+            <option value="normal">A*</option>
+            <option value="dijkstra">Dijkstra</option>
+            <option value="bfs">BFS</option>
+            <option value="dfs">DFS</option>
+            <option value="greedy">Greedy Best-first</option>
+            <option value="ids">IDS</option>
+        </select>
+
+        <h3>Chọn chế độ</h3>
+        <select id="Select_map" onchange="switchMap()">
+            <option value="normal">Tìm đường đi ngắn nhất</option>
+            <option value="flood">Add Flood</option>
+            <option value="traffic">Add Traffic</option>
+        </select>
+
+        <h3>Hiệu suất</h3>
+        <p><b>Thời gian:</b> <span id="time"></span></p>
+        <p><b>Số node duyệt:</b> <span id="visited"></span></p>
+        <p><b>Độ dài đường đi:</b> <span id="distance"></span></p>
+    </div>
+
     <div class="map-heading">Tìm đường ngắn nhất</div>
     <button id="resetButton" class="reset-button">Reset Map</button>
     <div id="map"></div>
     <script>
+        function switchMap() {
+            let algo = document.getElementById('Select_map').value;
+
+            if (algo === "flood") {
+                window.location.href = "map2_flood.html";
+            }
+            else if (algo === "traffic") {
+                window.location.href = "map2_traffic.html";
+            }
+            else {
+                window.location.href = "map2.html";
+            }
+        }
+
         const server = "http://localhost:5000";
-        const api = "/calculate?pntdata=";
+        const api = getApiByAlgorithm();
         const map = L.map("map").setView([21.04501, 105.79435], 16)
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
@@ -63,6 +101,26 @@
             let border = L.polyline(listOfBorders[i], {weight: 4, opacity:1, color:'red'})
             border.addTo(map)
         }
+
+        // lựa chọn api
+        function getApiByAlgorithm() {
+            const smap = document.getElementById("algoSelect").value;
+            if (smap == "flood") return "/calculate_flood?pntdata=";
+            else 
+            if (smap == "traffic") return "/calculate_traffic?pntdata=";
+
+            const algo = document.getElementById("algoSelect").value;
+
+            if (algo === "normal") return "/calculate?pntdata=";
+            if (algo === "dijkstra") return "/calculate_dijkstra?pntdata=";
+            if (algo === "bfs") return "/calculate_bfs?pntdata=";
+            if (algo === "dfs") return "/calculate_dfs?pntdata=";
+            if (algo === "greedy") return "/calculate_greedy?pntdata=";
+            if (algo === "ids") return "/calculate_ids?pntdata=";
+
+            return "/calculate?pntdata="; // default
+        }
+
         function onMapClick(e) {
             if (count == 0){
                 firstPoint.lat = e.latlng.lat

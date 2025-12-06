@@ -5,10 +5,16 @@ import numpy as np
 
 # --- Load blocked edges & penalty một lần ở mức module ---
 
+import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))   # folder gốc project
+BLOCKED_FILE = os.path.join(BASE_DIR, "data", "blocked_edges.txt")
+
 blocked_edges = set()
 edge_penalty = {}
 
-with open('C:\\Users\\Nhi Nhi\\Documents\\Code\\intro AI\\pathfinding-nghia-do-ward\\data\\blocked_edges.txt', 'r') as f:
+#with open('C:\\Users\\Nhi Nhi\\Documents\\Code\\intro AI\\pathfinding-nghia-do-ward\\data\\blocked_edges.txt', 'r') as f:
+with open(BLOCKED_FILE, "r") as f:
     for line in f:
         u, v, reason = line.strip().split()
         blocked_edges.add((u, v))

@@ -32,3 +32,15 @@
 .reset-button:hover {
     background-color: #f4f4f4;
 }
+
+#sidebar {
+    width: 250px;
+    background: white;
+    padding: 15px;
+    position: absolute;
+    top: 50px;
+    left: 10px;
+    z-index: 9999;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}

@@ -105,7 +105,10 @@ def reconstruct_path(previous, start, end):
     path.reverse()
     return path
 
-FILE_PATH = 'data/blocked_edges.txt'
+import os
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+FILE_PATH = os.path.join(BASE_DIR, "data", "blocked_edges.txt")
+#FILE_PATH = 'data/blocked_edges.txt'
 
 def mark_flood_on_path(path):
     """
