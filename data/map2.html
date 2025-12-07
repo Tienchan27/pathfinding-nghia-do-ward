@@ -37,7 +37,6 @@
 
         <h3>Hiệu suất</h3>
         <p><b>Thời gian:</b> <span id="time"></span></p>
-        <p><b>Số node duyệt:</b> <span id="visited"></span></p>
         <p><b>Độ dài đường đi:</b> <span id="distance"></span></p>
     </div>
 
@@ -148,12 +147,20 @@
                         alert("Fail to find the shortest path")
                     }
                 })
-                .then((array) => {
-                    console.log("Received path data:", array);
-                    polyline = L.polyline(array)
+                .then((data) => {
+                    console.log("Received data:", data);
+
+                    // 1. Update the sidebar stats
+                    document.getElementById("time").innerText = data.time + " ms";
+                    document.getElementById("distance").innerText = data.distance + " m";
+
+                    // 2. Draw the path using data.path
+                    polyline = L.polyline(data.path)
                     polyline.addTo(map);
-                    dashPolyline = L.polyline([array[0], [secondPoint.lat, secondPoint.lng]], {"dashArray": "10", "dashOffset": 3, "color": "gray"}).addTo(map)
-                    dashPolyline2 = L.polyline([array[array.length - 1], [firstPoint.lat, firstPoint.lng]], {"dashArray": "4", "dashOffset": 3, "color": "gray"}).addTo(map)
+
+                    // Update dashed lines using data.path
+                    dashPolyline = L.polyline([data.path[0], [secondPoint.lat, secondPoint.lng]], { "dashArray": "10", "dashOffset": 3, "color": "gray" }).addTo(map)
+                    dashPolyline2 = L.polyline([data.path[data.path.length - 1], [firstPoint.lat, firstPoint.lng]], { "dashArray": "4", "dashOffset": 3, "color": "gray" }).addTo(map)
                 })
                 .catch((e) => {
                     console.error("Error:", e);
@@ -218,10 +225,14 @@
                         alert("Fail to find the shortest path");
                     }
                 })
-                .then((array) => {
-                    polyline = L.polyline(array).addTo(map);
-                    dashPolyline = L.polyline([array[0], [secondPoint.lat, secondPoint.lng]], {"dashArray": "10", "dashOffset": 3, "color": "gray"}).addTo(map);
-                    dashPolyline2 = L.polyline([array[array.length - 1], [firstPoint.lat, firstPoint.lng]], {"dashArray": "4", "dashOffset": 3, "color": "gray"}).addTo(map);
+                .then((data) => {
+                    polyline = L.polyline(data.path).addTo(map);
+
+                    document.getElementById("time").innerText = data.time + " ms";
+                    document.getElementById("distance").innerText = data.distance + " m";
+
+                    dashPolyline = L.polyline([data.path[0], [secondPoint.lat, secondPoint.lng]], { "dashArray": "10", "dashOffset": 3, "color": "gray" }).addTo(map);
+                    dashPolyline2 = L.polyline([data.path[data.path.length - 1], [firstPoint.lat, firstPoint.lng]], { "dashArray": "4", "dashOffset": 3, "color": "gray" }).addTo(map);
                 })
                 .catch((e) => {
                     alert("Can't Find A Path");
