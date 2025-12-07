@@ -6,28 +6,37 @@
     <title>Tìm đường - Tránh tắc nghẽn</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✋</text></svg>" type="image/svg+xml">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""/>
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-     crossorigin=""></script>
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-    <link rel="stylesheet" href="/css/style_scenarios.css">
+    <link rel="stylesheet" href="../css/style.css">
 </head>
 
 <body>
+    <div id="sidebar">
+
+        <h3>Chọn thuật toán</h3>
+
+        <h3>Hiệu suất</h3>
+        <p><b>Thời gian:</b> <span id="time"></span></p>
+        <p><b>Độ dài đường đi:</b> <span id="distance"></span></p>
+        <button id="resetMapButton" style="margin-top:20px; width:100%">Reset Map</button>
+        <button id="resetEdgesButton" style="margin-top:10px; width:100%">Reset Blocked Edges</button>
+    </div>
+
     <div class="map-heading">Tìm đường tránh tắc nghẽn</div>
-    <button id="resetMapButton" class="map-button reset-map-button">Reset Map</button>
-    <button id="resetEdgesButton" class="map-button reset-edges-button">Reset Blocked Edges</button>
     <div id="map"></div>
     <script>
         const server = "http://localhost:5000";
         const api = "/calculate_traffic?pntdata=";
         const map = L.map("map").setView([21.04501, 105.79435], 16)
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
         let count = 0;
         let firstPoint = {};
@@ -37,44 +46,64 @@
         let marker2;
         let dashPolyline;
         let dashPolyline2;
-        listOfBorders = [
-        [[21.052119, 105.8044655], [21.0519123, 105.8019208], [21.0518971, 105.8007069], [21.0518683, 105.7948851], 
-        [21.0518770, 105.7929903], [21.0519239, 105.7899180], [21.0529624, 105.789934], [21.0543078, 105.789894], 
-        [21.0567384, 105.7899398], [21.0567801, 105.7894749], [21.0568018, 105.7889242], [21.0567567, 105.7881302], 
-        [21.0566166, 105.7869071], [21.0564521, 105.7863682], [21.0563544, 105.7861994], [21.0563259, 105.7860184], 
-        [21.0565464, 105.7844945], [21.0563309, 105.7838983], [21.0562605, 105.7827214], [21.0562174, 105.7823556], 
-        [21.055682, 105.7822137], [21.0556820, 105.7822137], [21.0547861, 105.7820122], [21.0538794, 105.7818821], 
-        [21.0527298, 105.7817561], [21.0517471, 105.7816911], [21.0489455, 105.7814669], [21.044065, 105.781148], 
-        [21.0418452, 105.7810068], [21.0416331, 105.7861868], [21.0416365, 105.7895166], [21.0416374, 105.7904034], 
-        [21.0414298, 105.7904551], [21.0412973, 105.7904806], [21.0407558, 105.7905008], [21.0404942, 105.7905006], 
-        [21.0403297, 105.7905004], [21.0377419, 105.7937663], [21.0377419, 105.7937663], [21.0377192, 105.7947095], 
-        [21.0393052, 105.7947014], [21.0392807, 105.7956182], [21.0388844, 105.7960137], [21.0390337, 105.7976838], 
-        [21.0375392, 105.7977528], [21.0364924, 105.7977644], [21.0355335, 105.7976529], [21.0339550, 105.7973765], 
-        [21.0332112, 105.7981326], [21.0317769, 105.7995718], [21.0308130, 105.8006044], [21.0302334, 105.8013534], 
-        [21.0314831, 105.8024483], [21.0323972, 105.8032814], [21.0327070, 105.8035437], [21.0328399, 105.8036452], 
-        [21.0329830, 105.8037413], [21.0340522, 105.8043976], [21.0342912, 105.8045434], [21.0345160, 105.8046953], 
-        [21.0355913, 105.8055566], [21.0363421, 105.8060435], [21.0365929, 105.8061742], [21.0368524, 105.8062751], 
-        [21.0370683, 105.806324], [21.0376871, 105.8063836], [21.0381128, 105.8064252], [21.0387044, 105.8064760], 
-        [21.0388958, 105.8064592], [21.0396488, 105.8063176], [21.0398394, 105.8062645], [21.0400902, 105.8062057], 
-        [21.040179, 105.8066358], [21.0401790, 105.8066358], [21.0402543, 105.8069306], [21.0407892, 105.8067149], 
-        [21.0414391, 105.8064931], [21.0421465, 105.8063760], [21.0426756, 105.8063452], [21.0434635, 105.8063575], 
-        [21.0441479, 105.8063267], [21.0454419, 105.8060925], [21.0479544, 105.8051485], [21.0495022, 105.8047424], 
-        [21.0503104, 105.8045961], [21.0514979, 105.8044782], [21.0519150, 105.8044697], [21.0521190, 105.8044655]]
 
+        // Define borders (same as before)
+        const listOfBorders = [
+            [[21.052119, 105.8044655], [21.0519123, 105.8019208], [21.0518971, 105.8007069], [21.0518683, 105.7948851],
+            [21.0518770, 105.7929903], [21.0519239, 105.7899180], [21.0529624, 105.789934], [21.0543078, 105.789894],
+            [21.0567384, 105.7899398], [21.0567801, 105.7894749], [21.0568018, 105.7889242], [21.0567567, 105.7881302],
+            [21.0566166, 105.7869071], [21.0564521, 105.7863682], [21.0563544, 105.7861994], [21.0563259, 105.7860184],
+            [21.0565464, 105.7844945], [21.0563309, 105.7838983], [21.0562605, 105.7827214], [21.0562174, 105.7823556],
+            [21.055682, 105.7822137], [21.0556820, 105.7822137], [21.0547861, 105.7820122], [21.0538794, 105.7818821],
+            [21.0527298, 105.7817561], [21.0517471, 105.7816911], [21.0489455, 105.7814669], [21.044065, 105.781148],
+            [21.0418452, 105.7810068], [21.0416331, 105.7861868], [21.0416365, 105.7895166], [21.0416374, 105.7904034],
+            [21.0414298, 105.7904551], [21.0412973, 105.7904806], [21.0407558, 105.7905008], [21.0404942, 105.7905006],
+            [21.0403297, 105.7905004], [21.0377419, 105.7937663], [21.0377419, 105.7937663], [21.0377192, 105.7947095],
+            [21.0393052, 105.7947014], [21.0392807, 105.7956182], [21.0388844, 105.7960137], [21.0390337, 105.7976838],
+            [21.0375392, 105.7977528], [21.0364924, 105.7977644], [21.0355335, 105.7976529], [21.0339550, 105.7973765],
+            [21.0332112, 105.7981326], [21.0317769, 105.7995718], [21.0308130, 105.8006044], [21.0302334, 105.8013534],
+            [21.0314831, 105.8024483], [21.0323972, 105.8032814], [21.0327070, 105.8035437], [21.0328399, 105.8036452],
+            [21.0329830, 105.8037413], [21.0340522, 105.8043976], [21.0342912, 105.8045434], [21.0345160, 105.8046953],
+            [21.0355913, 105.8055566], [21.0363421, 105.8060435], [21.0365929, 105.8061742], [21.0368524, 105.8062751],
+            [21.0370683, 105.806324], [21.0376871, 105.8063836], [21.0381128, 105.8064252], [21.0387044, 105.8064760],
+            [21.0388958, 105.8064592], [21.0396488, 105.8063176], [21.0398394, 105.8062645], [21.0400902, 105.8062057],
+            [21.040179, 105.8066358], [21.0401790, 105.8066358], [21.0402543, 105.8069306], [21.0407892, 105.8067149],
+            [21.0414391, 105.8064931], [21.0421465, 105.8063760], [21.0426756, 105.8063452], [21.0434635, 105.8063575],
+            [21.0441479, 105.8063267], [21.0454419, 105.8060925], [21.0479544, 105.8051485], [21.0495022, 105.8047424],
+            [21.0503104, 105.8045961], [21.0514979, 105.8044782], [21.0519150, 105.8044697], [21.0521190, 105.8044655]]
         ]
-        for (let i = 0; i < listOfBorders.length; i++){
-            let border = L.polyline(listOfBorders[i], {weight: 4, opacity:1, color:'red'})
+        for (let i = 0; i < listOfBorders.length; i++) {
+            let border = L.polyline(listOfBorders[i], { weight: 4, opacity: 1, color: 'red' })
             border.addTo(map)
         }
+
+        function getApiByAlgorithm() {
+            const smap = document.getElementById("algoSelect").value;
+            if (smap == "flood") return "/calculate_flood?pntdata=";
+            else
+                if (smap == "traffic") return "/calculate_traffic?pntdata=";
+
+            const algo = document.getElementById("algoSelect").value;
+
+            if (algo === "normal") return "/calculate?pntdata=";
+            if (algo === "dijkstra") return "/calculate_dijkstra?pntdata=";
+            if (algo === "bfs") return "/calculate_bfs?pntdata=";
+            if (algo === "dfs") return "/calculate_dfs?pntdata=";
+            if (algo === "greedy") return "/calculate_greedy?pntdata=";
+            if (algo === "ids") return "/calculate_ids?pntdata=";
+
+            return "/calculate_traffic?pntdata="; // default
+        }
+
         function onMapClick(e) {
-            if (count == 0){
+            if (count == 0) {
                 firstPoint.lat = e.latlng.lat
                 firstPoint.lng = e.latlng.lng
                 count += 1;
                 marker1 = L.marker([firstPoint.lat, firstPoint.lng])
                 marker1.addTo(map);
             }
-            else if (count == 1){
+            else if (count == 1) {
                 secondPoint.lat = e.latlng.lat;
                 secondPoint.lng = e.latlng.lng;
                 marker2 = L.marker([secondPoint.lat, secondPoint.lng]);
@@ -84,107 +113,83 @@
                 fetch(server + api + firstPoint.lat + ',' + firstPoint.lng + ',' + secondPoint.lat + ',' + secondPoint.lng, {
                     method: 'GET',
                     mode: 'cors',
-                    headers: {
-                        'Accept': 'application/json'
-                    }
+                    headers: { 'Accept': 'application/json' }
                 })
-                .then(response => {
-                    console.log("Response status:", response.status);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(array => {
-                    if (!array || array.length === 0) {
-                        console.log("No path found");
+                    .then(response => {
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        return response.json();
+                    })
+                    .then(data => {
+                        // CHANGED: Handle object response
+                        if (!data || !data.path || data.path.length === 0) {
+                            console.log("No path found");
+                            alert("Không tìm thấy đường đi phù hợp");
+                            return;
+                        }
+
+                        // Update Stats
+                        document.getElementById("time").innerText = data.time + " ms";
+                        document.getElementById("distance").innerText = data.distance + " m";
+
+                        // Draw Path
+                        if (polyline) map.removeLayer(polyline);
+                        polyline = L.polyline(data.path);
+                        polyline.addTo(map);
+
+                        if (dashPolyline) map.removeLayer(dashPolyline);
+                        dashPolyline = L.polyline([data.path[0], [secondPoint.lat, secondPoint.lng]],
+                            { "dashArray": "10", "dashOffset": 3, "color": "gray" }).addTo(map);
+
+                        if (dashPolyline2) map.removeLayer(dashPolyline2);
+                        dashPolyline2 = L.polyline([data.path[data.path.length - 1], [firstPoint.lat, firstPoint.lng]],
+                            { "dashArray": "4", "dashOffset": 3, "color": "gray" }).addTo(map);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
                         alert("Không tìm thấy đường đi phù hợp");
-                        return;
-                    }
-
-                    console.log("Received path data:", array);
-                    
-                    if (polyline) {
-                        map.removeLayer(polyline);
-                    }
-                    polyline = L.polyline(array);
-                    polyline.addTo(map);
-
-                    if (dashPolyline) {
-                        map.removeLayer(dashPolyline);
-                    }
-                    dashPolyline = L.polyline([array[0], [secondPoint.lat, secondPoint.lng]], 
-                        {"dashArray": "10", "dashOffset": 3, "color": "gray"}).addTo(map);
-
-                    if (dashPolyline2) {
-                        map.removeLayer(dashPolyline2);
-                    }
-                    dashPolyline2 = L.polyline([array[array.length - 1], [firstPoint.lat, firstPoint.lng]], 
-                        {"dashArray": "4", "dashOffset": 3, "color": "gray"}).addTo(map);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert("Không tìm thấy đường đi phù hợp");
-                });
+                    });
             }
-            else if (count == 2){
-                count = 0;
-                if (marker1) map.removeLayer(marker1);
-                if (marker2) map.removeLayer(marker2);
-                if (polyline) map.removeLayer(polyline);
-                if (dashPolyline) map.removeLayer(dashPolyline);
-                if (dashPolyline2) map.removeLayer(dashPolyline2);
-                marker1 = null;
-                marker2 = null;
-                polyline = null;
-                dashPolyline = null;
-                dashPolyline2 = null;
+            else if (count == 2) {
+                resetMap();
             }
         }
 
         map.on('click', onMapClick);
 
         function resetMap() {
-            if (marker1) map.removeLayer(marker1);
-            if (marker2) map.removeLayer(marker2);
-            if (polyline) map.removeLayer(polyline);
-            if (dashPolyline) map.removeLayer(dashPolyline);
-            if (dashPolyline2) map.removeLayer(dashPolyline2);
-            
-            marker1 = null;
-            marker2 = null;
-            polyline = null;
-            dashPolyline = null;
-            dashPolyline2 = null;
+            if (marker1) { map.removeLayer(marker1); marker1 = null; }
+            if (marker2) { map.removeLayer(marker2); marker2 = null; }
+            if (polyline) { map.removeLayer(polyline); polyline = null; }
+            if (dashPolyline) { map.removeLayer(dashPolyline); dashPolyline = null; }
+            if (dashPolyline2) { map.removeLayer(dashPolyline2); dashPolyline2 = null; }
+
+            // Clear stats
+            document.getElementById("time").innerText = "";
+            document.getElementById("distance").innerText = "";
+
             count = 0;
         }
 
         function resetBlockedEdges() {
-            // Clear blocked edges file
             fetch(server + '/reset_blocked_edges', {
                 method: 'POST',
                 mode: 'cors',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: { 'Content-Type': 'application/json' }
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    console.log('Reset blocked edges thành công:', data.message);
-                    alert('Đã reset blocked edges thành công');
-                } else {
-                    console.error('Reset blocked edges thất bại:', data.message);
-                    alert('Reset blocked edges thất bại: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Có lỗi xảy ra khi reset blocked edges');
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Đã reset blocked edges thành công');
+                    } else {
+                        alert('Reset blocked edges thất bại: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi reset blocked edges');
+                });
         }
-        
-        // Add click event listeners to buttons
+
         document.getElementById('resetMapButton').addEventListener('click', resetMap);
         document.getElementById('resetEdgesButton').addEventListener('click', resetBlockedEdges);
 
@@ -192,95 +197,78 @@
             defaultMarkGeocode: false,
             geocoder: L.Control.Geocoder.nominatim({
                 geocodingQueryParams: {
-                    viewbox: '105.73,20.96,105.96,21.09', 
+                    viewbox: '105.73,20.96,105.96,21.09',
                     bounded: 1,
                     countrycodes: 'vn',
-                    addressdetails: 1, 
-                    limit: 10, 
+                    addressdetails: 1,
+                    limit: 10,
                     'accept-language': 'vi'
                 }
             }),
             placeholder: 'Nhập địa chỉ cần tìm...',
-            suggestMinLength: 3, 
+            suggestMinLength: 3,
             position: 'topright',
             showResultIcons: true
         })
-        .on('markgeocode', function(e) {
-            const lat = e.geocode.center.lat;
-            const lng = e.geocode.center.lng;
+            .on('markgeocode', function (e) {
+                const lat = e.geocode.center.lat;
+                const lng = e.geocode.center.lng;
 
-            if (count == 0) {
-                firstPoint.lat = lat;
-                firstPoint.lng = lng;
-                count += 1;
-                marker1 = L.marker([lat, lng]).addTo(map)
-                    .bindPopup(e.geocode.name)
-                    .openPopup();            } else if (count == 1) {
-                secondPoint.lat = lat;
-                secondPoint.lng = lng;
-                
-                // Add marker before making the request
-                marker2 = L.marker([lat, lng])
-                    .bindPopup(e.geocode.name)
-                    .addTo(map);
-                
-                // Prevent additional clicks while processing
-                count = 2;
-                
-                // Make the request with proper error handling
-                fetch(server + api + firstPoint.lat + ',' + firstPoint.lng + ',' + secondPoint.lat + ',' + secondPoint.lng, {
-                    method: 'GET',
-                    mode: 'cors',
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                })
-                .then((res) => {
-                    console.log("Response status:", res.status);
-                    if (!res.ok) {
-                        throw new Error(`HTTP error! status: ${res.status}`);
-                    }
-                    return res.json();
-                })
-                .then((array) => {
-                    if (!array || array.length === 0) {
-                        throw new Error("Không tìm được đường đi");
-                    }
-                    console.log("Received path data:", array);
-                    
-                    // Remove existing paths if they exist
-                    if (polyline) map.removeLayer(polyline);
-                    if (dashPolyline) map.removeLayer(dashPolyline);
-                    if (dashPolyline2) map.removeLayer(dashPolyline2);
-                    
-                    // Add new paths
-                    polyline = L.polyline(array, {color: 'red'}).addTo(map);
-                    dashPolyline = L.polyline(
-                        [array[0], [secondPoint.lat, secondPoint.lng]], 
-                        {"dashArray": "10", "dashOffset": "3", "color": "gray"}
-                    ).addTo(map);
-                    dashPolyline2 = L.polyline(
-                        [array[array.length - 1], [firstPoint.lat, firstPoint.lng]], 
-                        {"dashArray": "4", "dashOffset": "3", "color": "gray"}
-                    ).addTo(map);
-                    
-                    // Fit bounds to show the entire route
-                    map.fitBounds(polyline.getBounds(), {padding: [50, 50]});
-                })
-                .catch((e) => {
-                    console.error("Error:", e);
-                    alert(e.message || "Không tìm thấy đường đi phù hợp");
-                    
-                    // Clean up on error
-                    if (marker2) {
-                        map.removeLayer(marker2);
-                        marker2 = null;
-                    }
-                    count = 1; // Allow selecting second point again
-                });
-            }
-        })
-        .addTo(map);
+                if (count == 0) {
+                    firstPoint.lat = lat;
+                    firstPoint.lng = lng;
+                    count += 1;
+                    marker1 = L.marker([lat, lng]).addTo(map).bindPopup(e.geocode.name).openPopup();
+                } else if (count == 1) {
+                    secondPoint.lat = lat;
+                    secondPoint.lng = lng;
+                    marker2 = L.marker([lat, lng]).bindPopup(e.geocode.name).addTo(map);
+                    count = 2;
+
+                    fetch(server + api + firstPoint.lat + ',' + firstPoint.lng + ',' + secondPoint.lat + ',' + secondPoint.lng, {
+                        method: 'GET',
+                        mode: 'cors',
+                        headers: { 'Accept': 'application/json' }
+                    })
+                        .then((res) => {
+                            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                            return res.json();
+                        })
+                        .then((data) => {
+                            // CHANGED: Handle object response
+                            if (!data || !data.path || data.path.length === 0) {
+                                throw new Error("Không tìm được đường đi");
+                            }
+
+                            // Update Stats
+                            document.getElementById("time").innerText = data.time + " ms";
+                            document.getElementById("distance").innerText = data.distance + " m";
+
+                            if (polyline) map.removeLayer(polyline);
+                            if (dashPolyline) map.removeLayer(dashPolyline);
+                            if (dashPolyline2) map.removeLayer(dashPolyline2);
+
+                            polyline = L.polyline(data.path, { color: 'red' }).addTo(map);
+                            dashPolyline = L.polyline(
+                                [data.path[0], [secondPoint.lat, secondPoint.lng]],
+                                { "dashArray": "10", "dashOffset": "3", "color": "gray" }
+                            ).addTo(map);
+                            dashPolyline2 = L.polyline(
+                                [data.path[data.path.length - 1], [firstPoint.lat, firstPoint.lng]],
+                                { "dashArray": "4", "dashOffset": "3", "color": "gray" }
+                            ).addTo(map);
+
+                            map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+                        })
+                        .catch((e) => {
+                            console.error("Error:", e);
+                            alert(e.message || "Không tìm thấy đường đi phù hợp");
+                            if (marker2) { map.removeLayer(marker2); marker2 = null; }
+                            count = 1;
+                        });
+                }
+            })
+            .addTo(map);
     </script>
 </body>
 </html>
