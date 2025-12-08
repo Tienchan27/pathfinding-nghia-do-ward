@@ -19,9 +19,13 @@
 <body>
     <div id="sidebar">
 
-        <h3>Hiệu suất</h3>
-        <p><b>Thời gian:</b> <span id="time"></span></p>
-        <p><b>Độ dài đường đi:</b> <span id="distance"></span></p>
+        <h3>Chọn chế độ</h3>
+        <select id="Select_map" onchange="switchMap()">
+            <option value="flood">Add Flood</option>
+            <option value="normal">Tìm đường đi ngắn nhất</option>
+            <option value="traffic">Add Traffic</option>
+        </select>
+
         <button id="resetMapButton" style="margin-top:20px; width:100%">Reset Map</button>
         <button id="resetEdgesButton" style="margin-top:10px; width:100%">Reset Blocked Edges</button>
     </div>
@@ -77,20 +81,30 @@
             border.addTo(map)
         }
 
+        function switchMap() {
+            let algo = document.getElementById('Select_map').value;
+
+            if (algo === "flood") {
+                window.location.href = "map2_flood.html";
+            }
+            else if (algo === "traffic") {
+                window.location.href = "map2_traffic.html";
+            }
+            else {
+                window.location.href = "map2.html";
+            }
+        }
+
         function getApiByAlgorithm() {
             const smap = document.getElementById("algoSelect").value;
+
             if (smap == "flood") return "/calculate_flood?pntdata=";
-            else
-                if (smap == "traffic") return "/calculate_traffic?pntdata=";
 
-            const algo = document.getElementById("algoSelect").value;
+            else if (smap == "traffic") return "/calculate_traffic?pntdata=";
 
-            if (algo === "normal") return "/calculate?pntdata=";
-            if (algo === "dijkstra") return "/calculate_dijkstra?pntdata=";
-            if (algo === "bfs") return "/calculate_bfs?pntdata=";
-            if (algo === "dfs") return "/calculate_dfs?pntdata=";
-            if (algo === "greedy") return "/calculate_greedy?pntdata=";
-            if (algo === "ids") return "/calculate_ids?pntdata=";
+            else if (smap == "normal") return "/calculate?pntdata=";
+
+
 
             return "/calculate_flood?pntdata="; // default
         }
@@ -129,10 +143,6 @@
                             return;
                         }
 
-                        // Update Sidebar Stats
-                        document.getElementById("time").innerText = data.time + " ms";
-                        document.getElementById("distance").innerText = data.distance + " m";
-
                         // Draw Map Elements
                         polyline = L.polyline(data.path)
                         polyline.addTo(map);
@@ -158,10 +168,6 @@
             if (polyline) { map.removeLayer(polyline); polyline = null; }
             if (dashPolyline) { map.removeLayer(dashPolyline); dashPolyline = null; }
             if (dashPolyline2) { map.removeLayer(dashPolyline2); dashPolyline2 = null; }
-
-            // Clear stats
-            document.getElementById("time").innerText = "";
-            document.getElementById("distance").innerText = "";
 
             count = 0;
         }
@@ -234,10 +240,6 @@
                         .then((data) => {
                             // CHANGED: Handle object response
                             if (!data || !data.path) return;
-
-                            // Update stats
-                            document.getElementById("time").innerText = data.time + " ms";
-                            document.getElementById("distance").innerText = data.distance + " m";
 
                             polyline = L.polyline(data.path).addTo(map);
                             dashPolyline = L.polyline([data.path[0], [secondPoint.lat, secondPoint.lng]], { "dashArray": "10", "dashOffset": 3, "color": "gray" }).addTo(map);
