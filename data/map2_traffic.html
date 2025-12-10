@@ -237,7 +237,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Đã lưu tuyến đường tránh tắc nghẽn');
+                    alert('Đã lưu tuyến đường tắc nghẽn');
                     pendingEdges = [];
                 } else {
                     alert('Không thể lưu tuyến đường: ' + (data.message || 'Unknown error'));
