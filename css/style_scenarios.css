@@ -1,86 +1,176 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    background: radial-gradient(circle at 5% 15%, #0f1c34 0%, #0b162a 35%, #0a1324 100%);
+    color: #dfe8ff;
+}
+
 #map{
     height: 99vh;
+}
+
+#sidebar .sidebar-title {
+    font-size: 16px;
+    font-weight: 700;
+    padding: 12px 14px;
+    border-radius: 12px;
+    color: #0b1221;
+    background: linear-gradient(135deg, #7dd3fc, #60a5fa);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.22);
+    text-align: center;
+    letter-spacing: 0.2px;
 }
 
 .map-heading {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    top: 10px;
+    top: 12px;
     z-index: 1000;
-    padding: 8px 16px;
-    background-color: rgba(33, 150, 243, 0.9);
+    padding: 10px 18px;
+    background: linear-gradient(135deg, rgba(26, 115, 232, 0.95), rgba(41, 182, 246, 0.92));
     color: white;
-    border-radius: 4px;
-    font-family: Arial, sans-serif;
-    font-weight: bold;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    border-radius: 10px;
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.16);
+}
+
+/* Sidebar layout */
+#sidebar {
+    width: 280px;
+    background: #fff;
+    padding: 18px;
+    position: absolute;
+    top: 100px;
+    left: 14px;
+    z-index: 9999;
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.14);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    border: 1px solid #edf0ff;
+}
+
+#sidebar h3 {
+    margin: 0 0 8px 0;
+    font-size: 15px;
+    color: #4a4a4a;
+    letter-spacing: 0.2px;
+}
+
+#sidebar select {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #d6d6d6;
+    font-size: 14px;
+    background: #fafbff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#sidebar select:focus {
+    outline: none;
+    border-color: #b7c7ff;
+    box-shadow: 0 0 0 3px rgba(119, 143, 255, 0.18);
+}
+
+#sidebar .sidebar-geocoder {
+    position: static !important;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.sidebar-geocoder .leaflet-control-geocoder-form {
+    display: flex;
+    gap: 0;
+}
+
+.sidebar-geocoder input {
+    flex: 1;
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: 1px solid #d6d6d6;
+    font-size: 14px;
+}
+
+.sidebar-geocoder .leaflet-control-geocoder-icon {
+    display: none !important;
+}
+
+.sidebar-geocoder .leaflet-control-geocoder-icon:hover {
+    background: #f6f6f6;
+    border-color: #c0c0c0;
+}
+
+.panel {
+    padding: 12px 14px;
+    border: 1px solid #e6e6e6;
+    border-radius: 12px;
+    background: #fbfbfe;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+}
+
+.panel.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: #f3f6ff;
+    border-color: #dfe5ff;
 }
 
 .map-button {
-    position: absolute;
-    left: 10px;
-    z-index: 1000;
-    padding: 8px 16px;
-    background-color: #fff;
-    border: 2px solid rgba(0,0,0,0.2);
-    border-radius: 4px;
+    width: 100%;
+    padding: 11px 12px;
+    border-radius: 10px;
+    border: 1px solid #d0d0d0;
+    background: linear-gradient(180deg, #ffffff, #f7f8ff);
     cursor: pointer;
-}
-
-.reset-map-button {
-    top: 90px;
-}
-
-.reset-edges-button {
-    top: 128px;
-    background-color: #ffebee;
-    border-color: #ef5350;
-    color: #d32f2f;
-}
-
-.reset-edges-button:hover {
-    background-color: #ffcdd2;
+    font-size: 14px;
+    transition: background 0.2s, border-color 0.2s, transform 0.1s;
+    position: relative;
+    left: 0;
+    top: 0;
+    font-weight: 600;
+    color: #1f2d46;
 }
 
 .map-button:hover {
-    background-color: #f4f4f4;
+    background: #eef3ff;
+    border-color: #b7c7ff;
 }
 
-/* CSS cho tiêu đề */
-.map-title {
-    position: absolute;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    font-size: 24px;
-    font-weight: bold;
-    color: #333;
-    background-color: rgba(255, 255, 255, 0.8);
-    padding: 10px 20px;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+.map-button:active {
+    transform: translateY(1px);
+}
+
+.reset-edges-button {
+    background: linear-gradient(180deg, #fff5f5, #ffe8e8);
+    border-color: #ef5350;
+    color: #b71c1c;
+}
+
+.reset-edges-button:hover {
+    background: #ffd7d7;
 }
 
 .save-edges-button {
-    position: absolute;
-    top: 165px;
-    left: 10px;
-    z-index: 1000;
-    padding: 8px 16px;
-    background-color: #e3f2fd;
-    border: 2px solid #64b5f6;
-    border-radius: 4px;
+    background: linear-gradient(180deg, #e8f3ff, #d8eaff);
+    border: 1px solid #64b5f6;
     color: #1e88e5;
-    cursor: pointer;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
 }
+
 .save-edges-button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
+
 .save-edges-button:hover:not(:disabled) {
-    background-color: #bbdefb;
+    background-color: #cfe4ff;
 }

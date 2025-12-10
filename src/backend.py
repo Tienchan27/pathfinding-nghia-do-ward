@@ -13,6 +13,9 @@ import dfs
 import ids
 import bfs
 from blocked_edges_storage import append_path, reset_storage, storage_path
+import os
+import time
+
 app = Flask(__name__)
 CORS(app)
 
@@ -79,6 +82,22 @@ def calculate_flood():
             "error": f"Lỗi khi tìm đường: {str(e)}"
         }), 500
 
+    start_time = time.time()
+
+    pathDict, finalDistance = astar_flood.astar_flood(start, end)
+
+    end_time = time.time()
+    elapsed_time = (end_time - start_time)
+
+    print("Shortest distance: " + str(finalDistance))
+    path_data = helper.getResponseLeafLet(pathDict, end)    
+    return jsonify({
+        "path": path_data,
+        "time": round(elapsed_time, 2), # Round to 2 decimal places
+        "distance": round(finalDistance, 2),
+        "visited": 0 
+    })
+
 @app.route('/calculate', methods=['GET'])
 def calculate():
     algorithm = request.args.get('algorithm', 'astar')
@@ -94,7 +113,7 @@ def calculate():
     print("Start Id: " + start)
     end = helper.getOSMId(mappedDestLoc[0], mappedDestLoc[1])
     print("End Id: " + end)
-    
+
     # Validate start and end nodes
     if not start or not end:
         error_msg = "Không tìm thấy node trên bản đồ"
@@ -140,8 +159,16 @@ def calculate():
             "error": error_msg
         }), 400
     
+    # Normalize algorithm aliases from client
+    if algorithm == 'normal':
+        algorithm = 'astar'
+    if algorithm == 'greedy':
+        algorithm = 'greedy_bfs'
+
     # Route to appropriate algorithm
     try:
+        start_time = time.time()
+
         if algorithm == 'astar':
             pathDict, finalDistance = astar.astar(start, end)
         elif algorithm == 'dijkstra':
@@ -159,6 +186,9 @@ def calculate():
         else:
             pathDict, finalDistance = astar.astar(start, end)
         
+        end_time = time.time()
+        elapsed_time = (end_time - start_time) * 1000
+
         print("Shortest distance: " + str(finalDistance))
         
         # Check if path was found
@@ -180,7 +210,9 @@ def calculate():
             })
         
         return jsonify({
-            "coordinates": coordinates,
+            "path": coordinates,
+            "time": round(elapsed_time, 2),
+            "distance": round(finalDistance, 2),
             "edges": path_edges
         })
     except Exception as e:
@@ -246,10 +278,41 @@ def calculate_traffic():
             "error": f"Lỗi khi tìm đường: {str(e)}"
         }), 500
 
+    start_time = time.time()
+
+    pathDict, finalDistance = astar_traffic.astar_traffic(start, end)
+
+    end_time = time.time()
+    elapsed_time = (end_time - start_time) * 1000
+
+    print("Shortest distance: " + str(finalDistance))
+
+    path_data = helper.getResponseLeafLet(pathDict, end)
+
+    # 5. Return JSON Object
+    return jsonify({
+        "path": path_data,
+        "time": round(elapsed_time, 2), # Round to 2 decimal places
+        "distance": round(finalDistance, 2),
+        "visited": 0
+    })
+
 @app.route('/reset_blocked_edges', methods=['POST'])
 def reset_blocked_edges():
     try:
         reset_storage()
+        # Open file in write mode to clear it
+
+        # Tự động lấy đường dẫn đúng tới thư mục data
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        blocked_file = os.path.join(base_dir, 'data', 'blocked_edges.txt')
+
+        # Ghi rỗng file
+        #with open('C:\\Users\\Nhi Nhi\\Documents\\Code\\intro AI\\pathfinding-nghia-do-ward\\data\\blocked_edges.txt', 'w', encoding='utf-8') as f:
+        with open(blocked_file, 'w', encoding='utf-8') as f:
+            f.write('')  
+
+        # Return success response
         return jsonify({
             "success": True,
             "message": f"Đã reset file {storage_path().name}"

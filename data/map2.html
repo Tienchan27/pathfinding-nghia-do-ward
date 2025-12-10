@@ -15,25 +15,60 @@
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     <link rel="stylesheet" href="../css/style.css">
+
 </head>
-<body>
-    <div class="map-heading">Tìm đường ngắn nhất</div>
+<body class="user-mode">
+    <div id="sidebar">
+        <div class="sidebar-title">Tìm đường ngắn nhất</div>
+        <div class="panel">
+            <h3>Chọn thuật toán</h3>
+            <select id="algoSelect">
+                <option value="astar">A*</option>
+                <option value="dijkstra">Dijkstra</option>
+                <option value="bfs">BFS</option>
+                <option value="dfs">DFS</option>
+                <option value="greedy_bfs">Greedy Best-first</option>
+                <option value="ids">IDS</option>
+            </select>
+        </div>
 
-    <select id="algorithmSelector" class="algorithm-selector">
-        <option value="astar">A* Search</option>
-        <option value="dijkstra">Dijkstra</option>
-        <option value="greedy_bfs">Greedy Best-First Search</option>
-        <option value="bfs">Breadth-First Search</option>
-        <option value="dfs">Depth-First Search</option>
-        <option value="ids">Iterative Deepening Search</option>
-    </select>
+        <div class="panel">
+            <h3>Chọn chế độ</h3>
+            <select id="Select_map" onchange="switchMap()">
+                <option value="normal">Tìm đường đi ngắn nhất</option>
+                <option value="flood">Add Flood</option>
+                <option value="traffic">Add Traffic</option>
+            </select>
+        </div>
 
-    <button id="resetButton" class="reset-button">Reset Map</button>
+        <div class="panel">
+            <h3>Hiệu suất</h3>
+            <p><b>Thời gian:</b> <span id="time"></span></p>
+            <p><b>Độ dài:</b> <span id="distance"></span></p>
+        </div>
+
+        <div class="panel actions">
+            <button id="resetButton" class="reset-button">Reset Map</button>
+        </div>
+    </div>
 
     <div id="map"></div>
     <script>
+        function switchMap() {
+            let algo = document.getElementById('Select_map').value;
+
+            if (algo === "flood") {
+                window.location.href = "map2_flood.html";
+            }
+            else if (algo === "traffic") {
+                window.location.href = "map2_traffic.html";
+            }
+            else {
+                window.location.href = "map2.html";
+            }
+        }
+
         const server = "http://localhost:5000";
-        const api = "/calculate?pntdata=";
         const map = L.map("map").setView([21.04501, 105.79435], 16)
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
@@ -47,7 +82,6 @@
         let marker2;
         let dashPolyline;
         let dashPolyline2;
-        const algorithmSelector = document.getElementById('algorithmSelector');
         listOfBorders = [
         [[21.052119, 105.8044655], [21.0519123, 105.8019208], [21.0518971, 105.8007069], [21.0518683, 105.7948851], 
         [21.0518770, 105.7929903], [21.0519239, 105.7899180], [21.0529624, 105.789934], [21.0543078, 105.789894], 
@@ -77,6 +111,13 @@
             let border = L.polyline(listOfBorders[i], {weight: 4, opacity:1, color:'red'})
             border.addTo(map)
         }
+
+        // lựa chọn api
+        function getApiByAlgorithm() {
+            // All algorithms are served by /calculate with ?algorithm=...
+            return "/calculate?pntdata=";
+        }
+
         function clearExistingRoute() {
             if (polyline) {
                 map.removeLayer(polyline);
@@ -131,7 +172,8 @@
                 marker2.addTo(map);
                 count += 1;
                 
-                const algorithm = algorithmSelector ? algorithmSelector.value : 'astar';
+                const api = getApiByAlgorithm();
+                const algorithm = document.getElementById("algoSelect").value;
                 const url = server + api + firstPoint.lat + ',' + firstPoint.lng + ',' + secondPoint.lat + ',' + secondPoint.lng + '&algorithm=' + algorithm;
                 
                 fetch(url, {
@@ -144,11 +186,24 @@
                     }
                     else{
                         console.log("Failed response:", res);
-                        alert("Fail to find the shortest path");
-                        return null;
+                        alert("Fail to find the shortest path")
                     }
                 })
-                .then(handleRouteResult)
+                .then((data) => {
+                    console.log("Received data:", data);
+
+                    // 1. Update the sidebar stats
+                    document.getElementById("time").innerText = data.time + " ms";
+                    document.getElementById("distance").innerText = data.distance + " m";
+
+                    // 2. Draw the path using data.path
+                    polyline = L.polyline(data.path)
+                    polyline.addTo(map);
+
+                    // Update dashed lines using data.path
+                    dashPolyline = L.polyline([data.path[0], [secondPoint.lat, secondPoint.lng]], { "dashArray": "10", "dashOffset": 3, "color": "gray" }).addTo(map)
+                    dashPolyline2 = L.polyline([data.path[data.path.length - 1], [firstPoint.lat, firstPoint.lng]], { "dashArray": "4", "dashOffset": 3, "color": "gray" }).addTo(map)
+                })
                 .catch((e) => {
                     console.error("Error:", e);
                     alert("Can't Find A Path");
@@ -166,7 +221,7 @@
 
         map.on('click', onMapClick);
 
-        L.Control.geocoder({
+        const geocoderControl = L.Control.geocoder({
             defaultMarkGeocode: false,
             geocoder: L.Control.Geocoder.nominatim({
                 geocodingQueryParams: {
@@ -202,7 +257,8 @@
                     .bindPopup(e.geocode.name)
                     .openPopup();
 
-                const algorithm = algorithmSelector ? algorithmSelector.value : 'astar';
+                const api = getApiByAlgorithm();
+                const algorithm = document.getElementById("algoSelect").value;
                 const url = server + api + firstPoint.lat + ',' + firstPoint.lng + ',' + secondPoint.lat + ',' + secondPoint.lng + '&algorithm=' + algorithm;
                 
                 fetch(url, {
@@ -213,16 +269,30 @@
                         return res.json();
                     } else {
                         alert("Fail to find the shortest path");
-                        return null;
                     }
                 })
-                .then(handleRouteResult)
+                .then((data) => {
+                    polyline = L.polyline(data.path).addTo(map);
+
+                    document.getElementById("time").innerText = data.time + " ms";
+                    document.getElementById("distance").innerText = data.distance + " m";
+
+                    dashPolyline = L.polyline([data.path[0], [secondPoint.lat, secondPoint.lng]], { "dashArray": "10", "dashOffset": 3, "color": "gray" }).addTo(map);
+                    dashPolyline2 = L.polyline([data.path[data.path.length - 1], [firstPoint.lat, firstPoint.lng]], { "dashArray": "4", "dashOffset": 3, "color": "gray" }).addTo(map);
+                })
                 .catch((e) => {
                     alert("Can't Find A Path");
                 });
             }
         })
         .addTo(map);
+
+        // Move geocoder search box into sidebar
+        const geocoderEl = geocoderControl.getContainer();
+        if (geocoderEl) {
+            geocoderEl.classList.add('sidebar-geocoder');
+            document.getElementById('sidebar').appendChild(geocoderEl);
+        }
 
         function update() {
             var new_data = "".concat(destination.lat, " ", destination.lng);
@@ -248,6 +318,8 @@
             }
             clearExistingRoute();
             count = 0;
+            document.getElementById("time").innerText = "";
+            document.getElementById("distance").innerText = "";
         }
         
         // Add click event listener
