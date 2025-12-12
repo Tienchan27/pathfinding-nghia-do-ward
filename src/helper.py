@@ -10,7 +10,7 @@ xmldoc = xmltodict.parse(graphml, xml_attribs=True)
 
 road = {
     "motorway":0, "trunk":0, "primary":0,"primary_link":0, "secondary":0, "tertiary":0, "secondary_link":0, "tertiary_link":0,
-    "residential":0, "unclassified":0, "service":0, "living_street":0, "footway":0, "path":0
+    "residential":0, "unclassified":0, "service":0, "living_street":0
 }
 
 # --------- TIỀN XỬ LÝ: BUILD INDEX CHO NODE & EDGE ---------
