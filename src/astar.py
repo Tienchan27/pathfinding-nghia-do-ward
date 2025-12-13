@@ -51,13 +51,14 @@ def astar(start, end):
     end_location = get_latlon_cached(end)
 
     open_heap = []                     # (f, node)
-    open_set = {start}                 # Track nodes trong heap để tránh duplicate
+    open_set = {}                     # Track nodes trong heap: {node: f_score} để tránh duplicate
     g_score = {start: 0.0}             # chi phí từ start đến node
     f_start = help.getHeuristic(start_location, end_location)
     f_score = {start: f_start}
     previous = {start: None}
 
     hq.heappush(open_heap, (f_start, start))
+    open_set[start] = f_start
 
     closed = set()
     t0 = time.time()
@@ -84,7 +85,8 @@ def astar(start, end):
             return previous, final_distance
 
         closed.add(curr_node)
-        open_set.discard(curr_node)  # Remove khỏi open_set khi đã closed
+        if curr_node in open_set:
+            del open_set[curr_node]  # Remove khỏi open_set khi đã closed
 
         for neighbor_id, edge_length in help.getAdjacentNodes(curr_node):
             # Bỏ qua nếu đã closed
@@ -111,12 +113,12 @@ def astar(start, end):
             f_score[neighbor_id] = f
             previous[neighbor_id] = curr_node
 
-            # Chỉ push nếu chưa có trong open_set hoặc f_score tốt hơn
-            if neighbor_id not in open_set:
+            # Chỉ push vào heap nếu:
+            # 1. Node chưa có trong open_set, HOẶC
+            # 2. Node đã có trong open_set nhưng f_score tốt hơn đáng kể (giảm duplicate entries)
+            if neighbor_id not in open_set or f < open_set.get(neighbor_id, float('inf')):
                 hq.heappush(open_heap, (f, neighbor_id))
-                open_set.add(neighbor_id)
-            # Nếu đã có trong open_set nhưng f_score tốt hơn, vẫn push (lazy deletion)
-            # Entry cũ sẽ bị skip khi pop ra
+                open_set[neighbor_id] = f
 
     # Không tìm được đường
     t1 = time.time()

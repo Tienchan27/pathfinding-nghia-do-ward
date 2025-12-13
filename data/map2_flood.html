@@ -292,6 +292,14 @@
                 const lng = e.geocode.center.lng;
 
                 if (count == 0) {
+                    // Clear existing markers and routes if any
+                    if (marker1) map.removeLayer(marker1);
+                    if (marker2) map.removeLayer(marker2);
+                    if (polyline) map.removeLayer(polyline);
+                    if (dashPolyline) map.removeLayer(dashPolyline);
+                    if (dashPolyline2) map.removeLayer(dashPolyline2);
+                    count = 0;
+                    
                     firstPoint.lat = lat;
                     firstPoint.lng = lng;
                     count += 1;
@@ -302,38 +310,38 @@
                     count += 1;
                     marker2 = L.marker([lat, lng]).addTo(map).bindPopup(e.geocode.name).openPopup();
 
+                    // Clear existing route before drawing new one
+                    if (polyline) map.removeLayer(polyline);
+                    if (dashPolyline) map.removeLayer(dashPolyline);
+                    if (dashPolyline2) map.removeLayer(dashPolyline2);
+
                     fetch(server + api + firstPoint.lat + ',' + firstPoint.lng + ',' + secondPoint.lat + ',' + secondPoint.lng, {
                         "mode": "cors"
                     })
                     .then((res) => {
+                        console.log("Response status:", res.status);
                         if (res.status == 200) {
                             return res.json();
                         } else {
-                            alert("Fail to find the shortest path");
+                            console.error("Failed response:", res);
+                            throw new Error("Fail to find the shortest path");
                         }
                     })
                     .then((result) => {
                         if (!result) {
-                            alert("Không nhận được phản hồi từ server");
-                            pendingEdges = [];
-                            if (saveEdgesButton) saveEdgesButton.disabled = true;
-                            return;
+                            throw new Error("Không nhận được phản hồi từ server");
                         }
                         
                         if (result.error) {
-                            alert(result.error);
-                            pendingEdges = [];
-                            if (saveEdgesButton) saveEdgesButton.disabled = true;
-                            return;
+                            throw new Error(result.error);
                         }
                         
                         const array = result.coordinates || result.path || result;
-                        if (!array || array.length === 0) {
-                            alert("Không tìm thấy đường đi phù hợp");
-                            pendingEdges = [];
-                            if (saveEdgesButton) saveEdgesButton.disabled = true;
-                            return;
+                        if (!array || !Array.isArray(array) || array.length === 0) {
+                            throw new Error("Không tìm thấy đường đi phù hợp");
                         }
+                        
+                        // Draw the path
                         polyline = L.polyline(array).addTo(map);
                         dashPolyline = L.polyline([array[0], [secondPoint.lat, secondPoint.lng]], {"dashArray": "10", "dashOffset": 3, "color": "gray"}).addTo(map);
                         dashPolyline2 = L.polyline([array[array.length - 1], [firstPoint.lat, firstPoint.lng]], {"dashArray": "4", "dashOffset": 3, "color": "gray"}).addTo(map);
@@ -344,8 +352,29 @@
                         }
                     })
                     .catch((e) => {
-                        alert("Can't Find A Path");
+                        console.error("Error:", e);
+                        alert("Can't Find A Path: " + (e.message || "Unknown error"));
+                        pendingEdges = [];
+                        if (saveEdgesButton) saveEdgesButton.disabled = true;
                     });
+                } else if (count == 2) {
+                    // Reset when clicking third time
+                    count = 0;
+                    if (marker1) map.removeLayer(marker1);
+                    if (marker2) map.removeLayer(marker2);
+                    if (polyline) map.removeLayer(polyline);
+                    if (dashPolyline) map.removeLayer(dashPolyline);
+                    if (dashPolyline2) map.removeLayer(dashPolyline2);
+                    marker1 = null;
+                    marker2 = null;
+                    pendingEdges = [];
+                    if (saveEdgesButton) saveEdgesButton.disabled = true;
+                    
+                    // Set first point
+                    firstPoint.lat = lat;
+                    firstPoint.lng = lng;
+                    count += 1;
+                    marker1 = L.marker([lat, lng]).addTo(map).bindPopup(e.geocode.name).openPopup();
                 }
             })
             .addTo(map);

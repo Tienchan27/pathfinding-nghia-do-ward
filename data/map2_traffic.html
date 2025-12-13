@@ -299,6 +299,14 @@
                 const lng = e.geocode.center.lng;
 
                 if (count == 0) {
+                    // Clear existing markers and routes if any
+                    if (marker1) map.removeLayer(marker1);
+                    if (marker2) map.removeLayer(marker2);
+                    if (polyline) map.removeLayer(polyline);
+                    if (dashPolyline) map.removeLayer(dashPolyline);
+                    if (dashPolyline2) map.removeLayer(dashPolyline2);
+                    count = 0;
+                    
                     firstPoint.lat = lat;
                     firstPoint.lng = lng;
                     count += 1;
@@ -308,12 +316,16 @@
                 } else if (count == 1) {
                     secondPoint.lat = lat;
                     secondPoint.lng = lng;
+                    count += 1;
                     
                     marker2 = L.marker([lat, lng])
                         .bindPopup(e.geocode.name)
                         .addTo(map);
                     
-                    count = 2;
+                    // Clear existing route before drawing new one
+                    if (polyline) map.removeLayer(polyline);
+                    if (dashPolyline) map.removeLayer(dashPolyline);
+                    if (dashPolyline2) map.removeLayer(dashPolyline2);
                     
                     fetch(server + api + firstPoint.lat + ',' + firstPoint.lng + ',' + secondPoint.lat + ',' + secondPoint.lng, {
                         method: 'GET',
@@ -339,15 +351,12 @@
                         }
                         
                         const array = result.coordinates || result.path || result;
-                        if (!array || array.length === 0) {
+                        if (!array || !Array.isArray(array) || array.length === 0) {
                             throw new Error("Không tìm được đường đi");
                         }
                         console.log("Received path data:", array);
                         
-                        if (polyline) map.removeLayer(polyline);
-                        if (dashPolyline) map.removeLayer(dashPolyline);
-                        if (dashPolyline2) map.removeLayer(dashPolyline2);
-                        
+                        // Draw the path
                         polyline = L.polyline(array, {color: 'red'}).addTo(map);
                         dashPolyline = L.polyline(
                             [array[0], [secondPoint.lat, secondPoint.lng]], 
@@ -367,14 +376,30 @@
                     })
                     .catch((e) => {
                         console.error("Error:", e);
-                        alert(e.message || "Không tìm thấy đường đi phù hợp");
-                        
-                        if (marker2) {
-                            map.removeLayer(marker2);
-                            marker2 = null;
-                        }
-                        count = 1;
+                        alert("Can't Find A Path: " + (e.message || "Unknown error"));
+                        pendingEdges = [];
+                        if (saveEdgesButton) saveEdgesButton.disabled = true;
                     });
+                } else if (count == 2) {
+                    // Reset when clicking third time
+                    count = 0;
+                    if (marker1) map.removeLayer(marker1);
+                    if (marker2) map.removeLayer(marker2);
+                    if (polyline) map.removeLayer(polyline);
+                    if (dashPolyline) map.removeLayer(dashPolyline);
+                    if (dashPolyline2) map.removeLayer(dashPolyline2);
+                    marker1 = null;
+                    marker2 = null;
+                    pendingEdges = [];
+                    if (saveEdgesButton) saveEdgesButton.disabled = true;
+                    
+                    // Set first point
+                    firstPoint.lat = lat;
+                    firstPoint.lng = lng;
+                    count += 1;
+                    marker1 = L.marker([lat, lng]).addTo(map)
+                        .bindPopup(e.geocode.name)
+                        .openPopup();
                 }
             })
         .addTo(map);
