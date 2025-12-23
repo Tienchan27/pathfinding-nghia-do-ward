@@ -4,27 +4,12 @@ import time
 import numpy as np
 import os
 
-# Code A*_traffic mới để cho phép đánh dấu nhiều đoạn tắc đường 1 lúc 
-# (code cũ đánh dấu đoạn tắc đường mới là nó xóa hết đoạn tắc đường cũ)
-# em vẫn để code cũ trong phần comment ở dưới ạ
-
-
-# =======================================
-# Cache LatLon
-# =======================================
-
 latlon_cache = {}
 
 def get_latlon_cached(node):
     if node not in latlon_cache:
         latlon_cache[node] = help.getLatLon(node)
     return latlon_cache[node]
-
-# =======================================
-# A* TRAFFIC: KHÔNG tránh traffic, KHÔNG nhìn blocked_edges
-# -> chỉ tìm đường ngắn nhất theo độ dài cạnh hiện tại,
-# để user đánh dấu nó là "traffic"
-# =======================================
 
 def astar_traffic(start, end):
     """
@@ -67,8 +52,6 @@ def astar_traffic(start, end):
             t1 = time.time()
             print("A* traffic time:", t1 - t0, "seconds")
             print("A* traffic distance:", final_distance)
-            # mark_flood_on_path(path)  # Removed: chỉ lưu khi user click button
-            # print("A* traffic path:", path)
             return previous, final_distance
 
         closed.add(curr_node)
@@ -94,7 +77,6 @@ def astar_traffic(start, end):
     t1 = time.time()
     print("A* traffic (improved) time:", t1 - t0, "seconds")
     print("Không tìm được đường (A* traffic) từ", start, "tới", end)
-    # mark_flood_on_path(path)  # Removed: chỉ lưu khi user click button
     return previous, float('inf')
 
 def reconstruct_path(previous, start, end):
@@ -111,9 +93,8 @@ def reconstruct_path(previous, start, end):
 
 import os
 
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # thư mục gốc project
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 FILE_PATH = os.path.join(BASE_DIR, "data", "blocked_edges.txt")
-#FILE_PATH = 'data/blocked_edges.txt'
 
 def mark_flood_on_path(path):
     """
@@ -122,8 +103,6 @@ def mark_flood_on_path(path):
         u v flood
     Không xoá dữ liệu cũ, không ghi trùng dòng.
     """
-
-    print("file founded")
 
     # Đảm bảo thư mục/file tồn tại
     if not os.path.exists('data'):
@@ -137,7 +116,7 @@ def mark_flood_on_path(path):
         for line in f:
             existing_lines.add(line.strip())
 
-    # Append các cạnh flood mới
+    # Append các cạnh traffic mới, tránh ghi trùng
     with open(FILE_PATH, 'a', encoding='utf-8') as f:
         for u, v in path:
             line = f"{u} {v} traffic"
@@ -147,88 +126,3 @@ def mark_flood_on_path(path):
 
 
 
-
-
-"""
-def astar_traffic(start, end):
-    # start: OSMId of the first point
-    # end: OSMId of the second point
-    # return a tuple of a dictionary to trace the final path and the shortest distance
-    previous = {} 
-    finalDistance = 0
-    # a* grade = aGrade
-    startLocation = help.getLatLon(start)
-    endLocation = help.getLatLon(end)
-    previous[start] = None
-    startToEnd = help.getHeuristic(startLocation, endLocation)
-    opened = [(startToEnd, 0, start)]
-    closed = {start: startToEnd}
-    hq.heapify(opened)
-    s = time.time()
-    while (len(opened) > 0):
-        currNodeAGrade, distanceToCurrNode, currNodeId = opened[0]
-        hq.heappop(opened)
-        closed[currNodeId] = currNodeAGrade
-        if (currNodeId == end):
-            finalDistance = distanceToCurrNode
-            break
-        adjacentNodes = help.getAdjacentNodes(currNodeId) # node = (nodeId, length)  
-        for node in adjacentNodes:
-            neighborNodeOSMId, currNodeToNodeLength = node
-            neighborNodeLocation = help.getLatLon(neighborNodeOSMId)
-            heuristic = help.getHeuristic(neighborNodeLocation, endLocation)
-            distanceToNeighborNode = distanceToCurrNode + currNodeToNodeLength
-            aGrade = distanceToNeighborNode + heuristic
-            value = (aGrade, distanceToNeighborNode, neighborNodeOSMId)
-            if (neighborNodeOSMId not in closed):
-                opened.append(value)
-                closed[neighborNodeOSMId] = aGrade
-                previous[neighborNodeOSMId] = currNodeId
-        hq.heapify(opened)
-    print("Time taken to find path(in second): "+str(time.time()-s))
-    path = reconstruct_path(previous, start, end)
-    print(path)
-    return (previous, finalDistance)
-
-def reconstruct_path(previous, start, end):
-    path = []
-    current = end
-    while current != start:
-        prev = previous.get(current)
-        if prev is None:
-            return []  # Không tìm được đường đi
-        path.append((prev, current))  # Đoạn đường từ prev -> current
-        current = prev
-    path.reverse()
-
-    # Ensure the file exists
-    file_path = 'data/blocked_edges.txt'
-    if not os.path.exists('data'):
-        os.makedirs('data')
-    
-    try:
-        # Read existing content
-        existing_edges = set()
-        if os.path.exists(file_path):
-            with open(file_path, 'r', encoding='utf-8') as f:
-                for line in f:
-                    existing_edges.add(line.strip())
-
-        # Write new edges, avoiding duplicates
-        with open(file_path, 'w', encoding='utf-8') as f:
-            for u, v in path:
-                edge_line = f"{u} {v} traffic"
-                if edge_line not in existing_edges:
-                    f.write(edge_line + '\n')
-                    existing_edges.add(edge_line)
-            # Write back any existing flood edges
-            for edge in existing_edges:
-                if edge.endswith('flood'):
-                    f.write(edge + '\n')
-
-    except Exception as e:
-        print(f"Error handling blocked_edges.txt: {str(e)}")
-        # Continue execution even if file operations fail
-    
-    return path
-"""
