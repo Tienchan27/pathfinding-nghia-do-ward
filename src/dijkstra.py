@@ -3,28 +3,14 @@ import heapq as hq
 import time
 import numpy as np
 
+from blocked_edges_storage import load_penalties
 
 def dijkstra(start, end):
     # start: OSMId of the first point
     # end: OSMId of the second point
     # return a tuple of a dictionary to trace the final path and the shortest distance
 
-    blocked_edges = set()
-    edge_penalty = {}
-
-    # Đọc danh sách cạnh bị chặn / bị phạt giống như trong A*
-    with open('data/blocked_edges.txt', 'r') as f:
-        for line in f:
-            u, v, reason = line.strip().split()
-            blocked_edges.add((u, v))
-            blocked_edges.add((v, u))  # vì đồ thị có thể vô hướng
-
-            if reason == "traffic":
-                edge_penalty[(u, v)] = 5  # hệ số phạt cho tắc đường
-                edge_penalty[(v, u)] = 5
-            elif reason == "flood":
-                edge_penalty[(u, v)] = float('inf')  # lũ -> không đi được
-                edge_penalty[(v, u)] = float('inf')
+    node_penalty = load_penalties()
 
     previous = {}
     dist = {}          # dist[node] = khoảng cách ngắn nhất đã biết từ start đến node
@@ -59,12 +45,18 @@ def dijkstra(start, end):
 
         for neighborNodeOSMId, currNodeToNodeLength in adjacentNodes:
 
-            # Bỏ qua cạnh bị chặn do lũ (penalty = inf)
-            if (currNodeId, neighborNodeOSMId) in edge_penalty and edge_penalty[(currNodeId, neighborNodeOSMId)] == float('inf'):
+            # Nếu một trong hai node bị flood -> bỏ cạnh
+            if (
+                node_penalty.get(currNodeId) == float("inf")
+                or node_penalty.get(neighborNodeOSMId) == float("inf")
+            ):
                 continue
 
-            # Áp dụng hệ số phạt nếu tắc đường
-            penalty = edge_penalty.get((currNodeId, neighborNodeOSMId), 1)
+            # Áp dụng hệ số phạt theo node tệ hơn
+            penalty = max(
+                node_penalty.get(currNodeId, 1.0),
+                node_penalty.get(neighborNodeOSMId, 1.0),
+            )
             adjustedLength = currNodeToNodeLength * penalty
 
             newDist = currDist + adjustedLength

@@ -24,9 +24,9 @@ def astar(start, end):
     start_location = get_latlon_cached(start)
     end_location = get_latlon_cached(end)
 
-    # Load penalty/banned-edges *tại thời điểm gọi* để luôn thấy
+    # Load penalty/banned-nodes *tại thời điểm gọi* để luôn thấy
     # các flood/traffic mới lưu trong blocked_edges.txt
-    edge_penalty = load_penalties()
+    node_penalty = load_penalties()
 
     open_heap = []                     # (f, node)
     open_set = {}                     # Track nodes trong heap: {node: f_score} để tránh duplicate
@@ -71,11 +71,18 @@ def astar(start, end):
             if neighbor_id in closed:
                 continue
 
-            # Bỏ qua cạnh bị chặn do lũ (penalty = inf)
-            if edge_penalty.get((curr_node, neighbor_id)) == float("inf"):
+            # Nếu một trong hai node bị flood -> bỏ cạnh
+            if (
+                node_penalty.get(curr_node) == float("inf")
+                or node_penalty.get(neighbor_id) == float("inf")
+            ):
                 continue
 
-            penalty = edge_penalty.get((curr_node, neighbor_id), 1)
+            # Hệ số phạt lấy theo node tệ hơn trên cạnh
+            penalty = max(
+                node_penalty.get(curr_node, 1.0),
+                node_penalty.get(neighbor_id, 1.0),
+            )
             adjusted_length = edge_length * penalty
 
             tentative_g = g_score[curr_node] + adjusted_length

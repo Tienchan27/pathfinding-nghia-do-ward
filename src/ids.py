@@ -1,6 +1,8 @@
 import helper as help
 import time
 
+from blocked_edges_storage import load_penalties
+
 def ids(start, end, max_depth=500):
     """
     Iterative Deepening Search (IDS) trên đồ thị đường đi.
@@ -14,26 +16,8 @@ def ids(start, end, max_depth=500):
                       hoặc float('inf') nếu không tìm thấy.
     """
 
-    # Đọc danh sách cạnh bị chặn / phạt giống A*, Dijkstra, DFS
-    blocked_edges = set()
-    edge_penalty = {}
-
-    try:
-        with open('data/blocked_edges.txt', 'r', encoding='utf-8') as f:
-            for line in f:
-                u, v, reason = line.strip().split()
-                blocked_edges.add((u, v))
-                blocked_edges.add((v, u))  # đồ thị vô hướng
-
-                if reason == "traffic":
-                    edge_penalty[(u, v)] = 5
-                    edge_penalty[(v, u)] = 5
-                elif reason == "flood":
-                    edge_penalty[(u, v)] = float('inf')
-                    edge_penalty[(v, u)] = float('inf')
-    except FileNotFoundError:
-        # Nếu chưa có file thì coi như không có cạnh bị chặn / phạt
-        pass
+    # Penalty theo NODE (flood/traffic)
+    node_penalty = load_penalties()
 
     overall_start_time = time.time()
 
@@ -49,8 +33,7 @@ def ids(start, end, max_depth=500):
             limit=depth_limit,
             previous=previous,
             visited=visited,
-            blocked_edges=blocked_edges,
-            edge_penalty=edge_penalty
+            node_penalty=node_penalty
         )
 
         if found:
@@ -72,8 +55,7 @@ def ids(start, end, max_depth=500):
     return {}, float('inf')
 
 
-def depth_limited_dfs(current, end, depth, limit, previous, visited,
-                      blocked_edges, edge_penalty):
+def depth_limited_dfs(current, end, depth, limit, previous, visited, node_penalty):
     """
     DFS có giới hạn độ sâu (Depth-Limited Search) – dùng đệ quy.
     - current: node hiện tại
@@ -113,8 +95,11 @@ def depth_limited_dfs(current, end, depth, limit, previous, visited,
     adjacentNodes = help.getAdjacentNodes(current)  # (neighbor, length)
 
     for neighbor, length in adjacentNodes:
-        # Bỏ qua cạnh bị chặn do lũ
-        if (current, neighbor) in edge_penalty and edge_penalty[(current, neighbor)] == float('inf'):
+        # Nếu node hiện tại hoặc node kề bị flood -> bỏ cạnh
+        if (
+            node_penalty.get(current) == float("inf")
+            or node_penalty.get(neighbor) == float("inf")
+        ):
             continue
 
         if neighbor not in visited:
@@ -126,8 +111,7 @@ def depth_limited_dfs(current, end, depth, limit, previous, visited,
                 limit,
                 previous,
                 visited,
-                blocked_edges,
-                edge_penalty
+                node_penalty,
             )
             if found:
                 return True, distance

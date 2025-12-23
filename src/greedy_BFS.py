@@ -2,6 +2,8 @@ import helper as help
 import heapq as hq
 import time
 
+from blocked_edges_storage import load_penalties
+
 def greedy_best_first(start, end):
     """
     Greedy Best-First Search:
@@ -14,23 +16,8 @@ def greedy_best_first(start, end):
                        hoặc float('inf') nếu không có đường.
     """
 
-    # Đọc danh sách cạnh bị chặn / bị phạt (phạt chỉ để tính distance,
-    # còn thứ tự mở node chỉ dựa trên heuristic)
-    blocked_edges = set()
-    edge_penalty = {}
-
-    with open('data/blocked_edges.txt', 'r') as f:
-        for line in f:
-            u, v, reason = line.strip().split()
-            blocked_edges.add((u, v))
-            blocked_edges.add((v, u))  # đồ thị có thể vô hướng
-
-            if reason == "traffic":
-                edge_penalty[(u, v)] = 5  # hệ số phạt cho tắc đường
-                edge_penalty[(v, u)] = 5
-            elif reason == "flood":
-                edge_penalty[(u, v)] = float('inf')  # lũ -> không đi được
-                edge_penalty[(v, u)] = float('inf')
+    # Penalty theo NODE (flood/traffic)
+    node_penalty = load_penalties()
 
     previous = {}
     previous[start] = None
@@ -65,15 +52,21 @@ def greedy_best_first(start, end):
         adjacentNodes = help.getAdjacentNodes(currNodeId)  # (neighborId, length)
         for neighborNodeOSMId, currNodeToNodeLength in adjacentNodes:
 
-            # Bỏ qua cạnh bị chặn do lũ
-            if (currNodeId, neighborNodeOSMId) in edge_penalty and edge_penalty[(currNodeId, neighborNodeOSMId)] == float('inf'):
+            # Nếu node hiện tại hoặc node kề bị flood -> bỏ cạnh
+            if (
+                node_penalty.get(currNodeId) == float("inf")
+                or node_penalty.get(neighborNodeOSMId) == float("inf")
+            ):
                 continue
 
             if neighborNodeOSMId in visited:
                 continue
 
-            # Áp dụng hệ số phạt để tính distance thực
-            penalty = edge_penalty.get((currNodeId, neighborNodeOSMId), 1)
+            # Áp dụng hệ số phạt để tính distance thực (traffic)
+            penalty = max(
+                node_penalty.get(currNodeId, 1.0),
+                node_penalty.get(neighborNodeOSMId, 1.0),
+            )
             adjustedLength = currNodeToNodeLength * penalty
 
             # cập nhật distance thực tế (dùng cho báo cáo finalDistance)

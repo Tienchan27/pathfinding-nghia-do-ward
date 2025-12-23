@@ -20,67 +20,88 @@ def _ensure_storage_file() -> None:
         STORAGE_FILE.touch()
 
 
-def _read_entries_unlocked() -> List[Tuple[str, str, str]]:
-    entries: List[Tuple[str, str, str]] = []
+def _read_entries_unlocked() -> List[Tuple[str, str]]:
+    """
+    Đọc file lưu trạng thái chặn theo NODE.
+
+    Định dạng mới (ưu tiên):
+        node reason
+
+    Định dạng cũ (vẫn hỗ trợ, để tương thích):
+        u v reason   -> được map thành hai node (u, reason) và (v, reason)
+    """
+    entries: List[Tuple[str, str]] = []
     if not STORAGE_FILE.exists():
         return entries
     with STORAGE_FILE.open("r", encoding="utf-8") as handle:
         for raw_line in handle:
             parts = raw_line.strip().split()
-            if len(parts) != 3:
+            if not parts:
                 continue
-            entries.append((parts[0], parts[1], parts[2]))
+            # Định dạng mới: node reason
+            if len(parts) == 2:
+                node, reason = parts
+                entries.append((node, reason))
+            # Định dạng cũ: u v reason -> convert sang hai node
+            elif len(parts) == 3:
+                u, v, reason = parts
+                entries.append((u, reason))
+                entries.append((v, reason))
     return entries
 
 
-def _write_entries_unlocked(entries: Sequence[Tuple[str, str, str]]) -> None:
+def _write_entries_unlocked(entries: Sequence[Tuple[str, str]]) -> None:
     with STORAGE_FILE.open("w", encoding="utf-8") as handle:
-        for u, v, reason in entries:
-            handle.write(f"{u} {v} {reason}\n")
+        for node, reason in entries:
+            handle.write(f"{node} {reason}\n")
 
 
-def load_entries() -> List[Tuple[str, str, str]]:
-    """Return all blocked edges as (source, target, reason)."""
+def load_entries() -> List[Tuple[str, str]]:
+    """Trả về danh sách (node, reason) đã bị đánh dấu."""
     with _LOCK:
         _ensure_storage_file()
         return list(_read_entries_unlocked())
 
 
-def load_penalties() -> Dict[Tuple[str, str], float]:
+def load_penalties() -> Dict[str, float]:
     """
-    Return a mapping of directed edges to penalty multipliers.
+    Trả về map từ node_id -> penalty.
 
-    Flood edges are treated as impassable (infinite penalty) and traffic edges receive a fixed slowdown.
+    Flood node: coi như không đi được (penalty = inf).
+    Traffic node: áp dụng hệ số phạt cố định.
     """
-    penalty: Dict[Tuple[str, str], float] = {}
-    for source, target, reason in load_entries():
+    penalty: Dict[str, float] = {}
+    for node, reason in load_entries():
         if reason == "flood":
             value = float("inf")
         elif reason == "traffic":
             value = TRAFFIC_PENALTY
         else:
             value = 1.0
-        penalty[(source, target)] = value
-        penalty[(target, source)] = value
+        penalty[node] = value
     return penalty
 
 
 def append_path(edges: Iterable[Tuple[str, str]], reason: str) -> None:
     """
-    Persist a set of directed edges with the provided reason.
+    Lưu các tình huống theo NODE dựa trên danh sách cạnh.
+
+    Mỗi cạnh (u, v) sẽ đánh dấu cả hai node u, v với reason tương ứng.
 
     The file is rewritten only when new data is actually appended to minimise I/O.
     """
-    normalized = {(str(u), str(v), reason) for u, v in edges}
-    if not normalized:
+    # Chuyển từ danh sách cạnh sang tập node
+    nodes = {str(u) for u, v in edges} | {str(v) for u, v in edges}
+    if not nodes:
         return
 
     with _LOCK:
         _ensure_storage_file()
-        existing_set = set(_read_entries_unlocked())
-        if normalized.issubset(existing_set):
+        existing = set(_read_entries_unlocked())
+        new_entries = {(node, reason) for node in nodes}
+        if new_entries.issubset(existing):
             return
-        updated = existing_set.union(normalized)
+        updated = existing.union(new_entries)
         _write_entries_unlocked(sorted(updated))
 
 

@@ -1,6 +1,8 @@
 import helper as help
 import time
 
+from blocked_edges_storage import load_penalties
+
 def dfs(start, end=None):
     """
     DFS trên đồ thị đường đi:
@@ -12,22 +14,8 @@ def dfs(start, end=None):
                       hoặc None nếu không truyền end hoặc không tìm thấy đường
     """
 
-    # Đọc danh sách cạnh bị chặn / bị phạt giống các thuật toán khác
-    blocked_edges = set()
-    edge_penalty = {}
-
-    with open('data/blocked_edges.txt', 'r') as f:
-        for line in f:
-            u, v, reason = line.strip().split()
-            blocked_edges.add((u, v))
-            blocked_edges.add((v, u))  # đồ thị vô hướng
-
-            if reason == "traffic":
-                edge_penalty[(u, v)] = 5
-                edge_penalty[(v, u)] = 5
-            elif reason == "flood":
-                edge_penalty[(u, v)] = float('inf')
-                edge_penalty[(v, u)] = float('inf')
+    # Penalty theo NODE (flood/traffic)
+    node_penalty = load_penalties()
 
     visited = set()
     previous = {}
@@ -52,8 +40,11 @@ def dfs(start, end=None):
         adjacentNodes = help.getAdjacentNodes(curr)  # (neighbor, length)
 
         for neighbor, length in adjacentNodes:
-            # Bỏ qua cạnh bị chặn do lũ
-            if (curr, neighbor) in edge_penalty and edge_penalty[(curr, neighbor)] == float('inf'):
+            # Nếu node hiện tại hoặc node kề bị flood -> bỏ cạnh
+            if (
+                node_penalty.get(curr) == float("inf")
+                or node_penalty.get(neighbor) == float("inf")
+            ):
                 continue
 
             if neighbor not in visited:
